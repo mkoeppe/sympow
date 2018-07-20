@@ -23,7 +23,7 @@ void get_primes_ll(llint st,llint sz,llint *A)
  if (DEBUG>=2) printf("Done with get_primes_ll\n"); free(auxp);}
 
 void free_data()
-{QD **P; int i; if (DEBUG) printf("free_data\n"); free(TACKS[0]);
+{QD **P; int i; if (DEBUG) printf("free_data\n");
  P=TABLE[0]; for (i=0;i<MESH_COUNT[0];i++) free(P[i]); free(P);
  P=POWSER[0]; for (i=0;i<=NUM_LOGS[0];i++) free(P[i]); free(P);}
 
