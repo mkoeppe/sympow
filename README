@@ -153,9 +153,25 @@ ChangeLog/BugFixes:
                    (needed for 64-bit machines), add --help, etc. [1 Mar 2006]
 * VERSION 1.018 --- speed up ec_ap via idea of Geoff Bailey, use lesser prec
                     in QD computations when possible, new fpu.c,
-		    -mdspeed option, -noqdcheck option [24 Apr 2006]
+                    -mdspeed option, -noqdcheck option [24 Apr 2006]
 * VERSION 1.019 --- getline -> getline0, 'which \cp' in config [11 May 2006]
 * VERSION 1.020 --- fixed periods.c bug, made armd.sh to re-make initial data
 * VERSION 1.021 --- fiddled with armd.sh, remove which in config, need /bin/sh
 * VERSION 1.022 --- added rounding in integer printing in QD.c [23 Feb 2009]
 * VERSION 1.023 --- fixed tame/wild conductors in Hecke case [28 Feb 2009]
+* VERSION 2.023.0 --- forked at GitLab by Jerome G. M. Benoit
+                      (https://gitlab.com/rezozer/forks/sympow) [20 Jul 2018]
+* VERSION 2.023.1 --- patched with upstream-centric patches as furnished by
+                      Debian on June 2018 (Debian version 1.023-9):
+                      - fix segfault emitted by -analrank
+                      - fpu patch by David Kirkby (origin: Sage)
+                      - use execlp() instead of execl() to execute "sh" (origin: Sage)
+                      - actual FPU precison at Configure time (origin: Sage + Debian)
+                      - revisit floating-point rounding precision (origin: Debian)
+                      - format usages and helps wrt UN*X customs (origin: Debian)
+                      - on fly data generation (origin: Debian)
+                      - system wide scheme (origin: Debian)
+                      - prune the auxiliary script new_data (origin: Debian)
+                      - determine ENDIANTUPLE at Configure time (origin: Debian)
+                      - version-tuple support (origin: Debian)
+                      [20 Jul 2018]
