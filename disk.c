@@ -23,7 +23,25 @@ static void read_file_series(FILE *A,int which)
   for(k=0;k<4;k++) {fscanf(A,"%s",INPUT); TACKS[which][i][k]=atof(INPUT);}}}
 
 static int get_params(int which,int sp,int ep,int dv)
-{FILE *F; int ms=0; char TOK[16]=",",LINE[64],S[16],*STR,U[16];
+{FILE *F; int ms=0; char TOK[16]=",",LINE[64],S[16],*STR,U[16]; int SROUND=FALSE;
+
+#define PROCNAME_GET_PARAMS \
+  if ((S[0]==LINE[0]) && (S[1]==LINE[1]) && (S[2]==LINE[2]) && (S[3]==LINE[3]) \
+      && !assure_line(LINE)) \
+  {printf("Problem with datafiles/param_data for %s\n",S); \
+   errorit("datafiles/param_data entry corrupted!");} \
+  STR=strtok(LINE,TOK); \
+  if (!strcmp(STR,S)) \
+  {if (VERBOSE>=2) printf("S Found: %s\n",S); \
+   TOO_BIG[which]=atof(strtok(NULL,TOK)); \
+   STEP_SIZE[which]=QD_2pow(atoi(strtok(NULL,TOK))); \
+   ms=atoi(strtok(NULL,TOK)); CHEAT=FALSE; break;} \
+  if (!strcmp(STR,U)) \
+  {if (VERBOSE>=2) printf("U Found: %s\n",U); \
+   TOO_BIG[which]=atof(strtok(NULL,TOK)); \
+   STEP_SIZE[which]=QD_2pow(atoi(strtok(NULL,TOK))); \
+   ms=atoi(strtok(NULL,TOK)); CHEAT=TRUE; break;}
+
  if (!GLOBAL) return 0;
  if (HECKE)
  {HALF_ZERO[which]=FALSE; NUM_LOGS[which]=0;
@@ -41,32 +59,40 @@ static int get_params(int which,int sp,int ep,int dv)
  if (HECKE && dv) {TACKS[which]=malloc(dv*sizeof(QD)); TACKON[which]=dv;}
  else if (dv<=sp/2) TACKON[which]=0;
  else {TACKS[which]=malloc((dv-sp/2)*sizeof(QD)); TACKON[which]=dv-sp/2;}
- S[4]=0; F=fopen("datafiles/param_data","r"); strcpy(U,S);
+ S[4]=0; strcpy(U,S);
  if (ANAL_RANK) {if (dv>0) U[0]='A'; else U[0]='m';}
  if (MODDEG) {if (HECKE) U[0]='m'; else U[0]='M';}
+ F=fopen("datafiles/param_data","r");
  while (1)
  {if (!getline0(F,LINE,64))
-  {printf("**ERROR** %s not found in param_data file\n",S);
-   if (!HECKE) printf("It can be added with './sympow -new_data %i",sp);
-   else printf("It can be added with './sympow -new_data %i",ep);
-   if ((sp&1) || HECKE) printf("d%i",dv); if ((HECKE) && (sp>1)) printf("h");
-   if ((CM_CASE) && ((sp&3)==0)) printf("c"); printf("'\n"); exit(-1);}
-  if ((S[0]==LINE[0]) && (S[1]==LINE[1]) && (S[2]==LINE[2]) && (S[3]==LINE[3])
-      && !assure_line(LINE))
-  {printf("Problem with datafiles/param_data for %s\n",S);
-   errorit("datafiles/param_data entry corrupted!");}
-  STR=strtok(LINE,TOK);
-  if (!strcmp(STR,S))
-  {if (VERBOSE>=2) printf("S Found: %s\n",S);
-   TOO_BIG[which]=atof(strtok(NULL,TOK));
-   STEP_SIZE[which]=QD_2pow(atoi(strtok(NULL,TOK)));
-   ms=atoi(strtok(NULL,TOK)); CHEAT=FALSE; break;}
-  if (!strcmp(STR,U))
-  {if (VERBOSE>=2) printf("U Found: %s\n",U);
-   TOO_BIG[which]=atof(strtok(NULL,TOK));
-   STEP_SIZE[which]=QD_2pow(atoi(strtok(NULL,TOK)));
-   ms=atoi(strtok(NULL,TOK)); CHEAT=TRUE; break;}}
- EXPAND0_LIM[which]=31.5*STEP_SIZE[which]; fclose(F); return 32*ms;}
+  {char HYPERINDEX[64]; int OFFSET=0;
+   if (VERBOSE) printf("%s not found in param_data file\n",S);
+   OFFSET=sprintf(HYPERINDEX,"%i",(HECKE)?ep:sp);
+   if ((sp&1) || HECKE)   OFFSET+=sprintf(HYPERINDEX+OFFSET,"d%i",dv);
+   if ((HECKE) && (sp>1)) OFFSET+=sprintf(HYPERINDEX+OFFSET,"h");
+   if ((CM_CASE) && ((sp&3)==0))  sprintf(HYPERINDEX+OFFSET,"c");
+#ifdef NEW_DATA
+   if (VERBOSE) printf("Will compute data mesh file for `%s'\n",HYPERINDEX);
+   if (fork_new_data(HYPERINDEX))
+	  {printf("**ERROR** [FAILED]\nIt may be try with './sympow -new_data `%s'\n",HYPERINDEX); exit(-1);}
+   if (VERBOSE) printf("Has computed data mesh file for `%s'\n",HYPERINDEX);
+#else
+   printf("It can be added with './sympow -new_data `%s'\n",HYPERINDEX); exit(-1);
+#endif
+   SROUND=TRUE; break;}
+ PROCNAME_GET_PARAMS}
+ if (SROUND)
+ {F=freopen("datafiles/param_data","r",F);
+  while (1)
+  {if (!getline0(F,LINE,64))
+   {printf("**ERROR** %s not found in param_data file in second round\n",S); exit(-1);}
+  PROCNAME_GET_PARAMS}}
+ EXPAND0_LIM[which]=31.5*STEP_SIZE[which];
+ fclose(F);
+
+#undef PROCNAME_GET_PARAMS
+
+ return 32*ms;}
 
 void load_files(int which,int sp,int ep,int dv)
 {FILE *A,*N; char NM[32],NAME[32]="datafiles/P"; int dl=9;

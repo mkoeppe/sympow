@@ -113,6 +113,7 @@ void new_sympow_s2(char*);
 void rewarp_params();
 void txt2bin(int,char*,FILE*);
 void new_data(char*);
+int fork_new_data(char*);
 
 /* help.c */
 void help_message();

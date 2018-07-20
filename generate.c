@@ -202,3 +202,11 @@ void new_data(char *S)
  else if (sp&1) sprintf(ARGS,"-sp %i -dv %i",sp,dv);
  else sprintf(ARGS,"-sp %i",sp);
  execlp(SH,SH,PATH,SH,GP,ARGS,NULL);}
+
+int fork_new_data(char *S)
+{int STATUS=0; pid_t PID;
+ PID=fork();
+ if (PID==0) { /* child process */ new_data(S); _exit(-1);}
+ else if (PID<0) { /* failed fork */ STATUS=-2;}
+ else { /* parent process */ if (waitpid(PID,&STATUS,0)!=PID) {STATUS=-3;}}
+ return STATUS; }
