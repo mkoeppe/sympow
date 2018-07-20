@@ -191,7 +191,7 @@ static void postpare_main()
 
 int main(int argc,char **argv)
 {char INSTRING[1024]="2w3s1p32,3bp16d1,4p8\0",CSTR[1024]="\0",LSTR[1024]="\0";
- char TYPE[16]; int i=1; llint NT,UB=(((llint) 1)<<45);
+ char TYPE[128]; int i=1; llint NT,UB=(((llint) 1)<<45);
  int NO_CM=FALSE,info=0,ROOTNO=FALSE,SLOPPY=0,QD_CHECK;
  NO_QT=FALSE; VERBOSE=VERBOSE_DEFAULT; GLOBAL=TRUE; HECKE=FALSE; TWIST=FALSE; AP_SAVE=0;
  CM_CASE=FALSE; GET=malloc(1024); COND0=1; fp3=0; fp2=0; MAX_TABLE=1<<27;
@@ -200,7 +200,7 @@ int main(int argc,char **argv)
 #if defined(ISOC99_FENV) || defined(FPUCONTROLH) || defined(x86)
  fpu_53bits();
 #endif
- strcpy(TYPE,"RELEASE"); MD_SPEED=2.0;
+ snprintf(TYPE,sizeof(TYPE),"%s",FLAVOUR); MD_SPEED=2.0;
  while(i<argc)
  {if (!strcmp(argv[i],"-quiet")) {VERBOSE=0; i++;}
   else if ((!strcmp(argv[i],"-sympow")) || (!strcmp(argv[i],"-sp")))
@@ -208,8 +208,9 @@ int main(int argc,char **argv)
   else if (!strcmp(argv[i],"-terse")) {VERBOSE=1; i++;}
   else if (!strcmp(argv[i],"-verbose")) {VERBOSE=2; i++;}
   else if (!strcmp(argv[i],"-help")) help_message();
-  else if (!strcmp(argv[i],"-version")) { printf("%s\n",VERSION); exit(0);}
+  else if (!strcmp(argv[i],"-version")) { printf("%s %s\n",VERSION,TYPE); exit(0);}
   else if (!strcmp(argv[i],"-dump-endiantuple")) { printf("%s\n",ENDIANTUPLE); exit(0);}
+  else if (!strcmp(argv[i],"-dump-versiontuple")) { printf("%s\n",VERSION); exit(0);}
   else if (!strcmp(argv[i],"-curve")) {strcpy(CSTR,argv[i+1]); i+=2;}
   else if (!strcmp(argv[i],"-label")) {strcpy(LSTR,argv[i+1]); i+=2;}
   else if (!strcmp(argv[i],"-info")) {info=i+1; i+=3;}

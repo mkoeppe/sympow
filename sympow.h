@@ -6,6 +6,11 @@
 #include <strings.h>
 #include "config.h"
 
+/* flavour/type */
+#ifndef FLAVOUR
+#define FLAVOUR "RELEASE"
+#endif
+
 /* user level usage */
 #define SYMPOW_ENV_CACHEDIR    "SYMPOW_CACHEDIR"
 
