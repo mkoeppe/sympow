@@ -38,7 +38,7 @@ echo "*WARNING*: Could not find gp --- will not be able to build new_data";
 echo "#define GP \"gp\"" >> $CONFIG
 fi
 
-SED=`which \sed` && echo "#define SED \"$SED\"" >> $CONFIG
+SED=`which \sed` && echo "#define SED \"$SED\"" >> $CONFIG && echo "SED = $SED" >> $FILE
 if [ -z "$SED" ];
 then
 echo "*WARNING*: Could not find sed --- will not be able to build new_data";
@@ -305,25 +305,36 @@ fi
 ####echo "WDIR = SYMPOW-\$(VERSION)" >> $FILE && echo "" >> $FILE
 ####fi
 
-echo "all: sympow" >> $FILE
+echo "default: build-arch" >> $FILE
+echo "all: build-arch build-indep" >> $FILE
+echo "build-arch: sympow" >> $FILE
+echo "build-indep: datafiles/param_data" >> $FILE
 echo "sympow: \$(OBJS)" >> $FILE
-echo "	\$(MKDIR) -p datafiles" >> $FILE
-echo "	\$(TOUCH) datafiles/param_data" >> $FILE
 echo "	\$(CC) \$(CPPFLAGS) \$(CFLAGS) \$(OPT) -o \$@ \$(DEFS) \$(OBJS) \$(LDFLAGS) \$(LIBS)" >> $FILE
 ##echo "fpu.o : fpu.s Makefile" >> $FILE
 ##echo "	\$(CC) \$(OPT) -c fpu.s" >> $FILE
 echo "%.o : %.c \$(HEADERS) Makefile" >> $FILE
 echo "	\$(CC) \$(CPPFLAGS) \$(CFLAGS) \$(OPT) \$(DEFS) -c -o \$@ \$<" >> $FILE
+echo "datafiles/param_data: \$(OTHERb)" >> $FILE
+echo "	\$(MKDIR) -p datafiles" >> $FILE
+echo "	\$(TOUCH) datafiles/param_data" >> $FILE
+echo "	\$(SH) armd.sh" >> $FILE
+echo "	\$(SED) -i -e '/logfile =/d' datafiles/*.txt" >> $FILE
 echo "clean:" >> $FILE
 ##echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" >> $FILE
 echo "	\$(RM) -f \$(OBJS) sympow \$(TILDES)" >> $FILE
-echo "install: all" >> $FILE
-echo "	install -d \$(DESTDIR)/$PREFIX/bin" >> $FILE
-echo "	install -d \$(DESTDIR)/$PREFIX/lib/sympow" >> $FILE
-echo "	install -d \$(DESTDIR)/$PREFIX/share/sympow" >> $FILE
-echo "	install -t \$(DESTDIR)/$PREFIX/bin sympow" >> $FILE
-echo "	install -t \$(DESTDIR)/$PREFIX/lib/sympow new_data" >> $FILE
-echo "	cp -t \$(DESTDIR)/$PREFIX/share/sympow standard1.gp standard2.gp standard3.gp" >> $FILE
+echo "	\$(RM) -rf datafiles" >> $FILE
+echo "install-arch: build-arch" >> $FILE
+echo "	install -d \$(DESTDIR)$PREFIX/bin" >> $FILE
+echo "	install -t \$(DESTDIR)$PREFIX/bin sympow" >> $FILE
+echo "install-indep: build-indep" >> $FILE
+echo "	install -d \$(DESTDIR)$PREFIX/lib/sympow" >> $FILE
+echo "	install -d \$(DESTDIR)$PREFIX/share/sympow" >> $FILE
+echo "	install -d \$(DESTDIR)$PREFIX/share/sympow/datafiles" >> $FILE
+echo "	install -t \$(DESTDIR)$PREFIX/lib/sympow new_data" >> $FILE
+echo "	cp -t \$(DESTDIR)$PREFIX/share/sympow standard1.gp standard2.gp standard3.gp" >> $FILE
+echo "	cp -t \$(DESTDIR)$PREFIX/share/sympow/datafiles datafiles/*.txt datafiles/param_data" >> $FILE
+echo "install: install-arch install-indep" >> $FILE
 ####if [ -n "$TAR" ];
 ####then
 ####echo "source:" >> $FILE
