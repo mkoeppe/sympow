@@ -1,0 +1,173 @@
+#! /bin/sh
+
+if [ "$1" != "" ];
+then
+echo "**ERROR**: Configure does not take any options for SYMPOW"; exit;
+fi
+
+FILE="Makefile.new"
+CONFIG="config.h"
+RM=rm
+if [ -z "$RM" ];
+then
+echo "**ERROR**: Could not find rm"; exit;
+fi
+$RM -f $FILE
+$RM -f $CONFIG
+VERSION=1.023
+echo "#define VERSION \"$VERSION\"" >> $CONFIG
+echo "VERSION = $VERSION" >> $FILE
+echo "#define RM \"$RM\"" >> $CONFIG
+
+GREP=grep && echo "#define GREP \"$GREP\"" >> $CONFIG
+if [ -z "$GREP" ];
+then
+echo "*WARNING*: Could not find grep --- will not be able to build new_data";
+echo "#define GREP grep" >> $CONFIG
+fi
+
+GP=gp && echo "#define GP \"$GP\"" >> $CONFIG
+if [ -z "$GP" ];
+then
+echo "*WARNING*: Could not find gp --- will not be able to build new_data";
+echo "#define GP gp" >> $CONFIG
+fi
+
+SED=sed && echo "#define SED \"$SED\"" >> $CONFIG
+if [ -z "$SED" ];
+then
+echo "*WARNING*: Could not find sed --- will not be able to build new_data";
+echo "#define SED sed" >> $CONFIG
+fi
+
+[ -n "$GREP" ] && [ -n "$GP" ] && [ -n "$SED" ]\
+ && echo "#define NEW_DATA" >> $CONFIG
+
+SH=sh && echo "#define SH \"$SH\"" >> $CONFIG
+if [ -z "$SH" ];
+then
+echo "**ERROR**: Could not find sh"; exit;
+fi
+
+CC=cc && echo "CC = $CC" >> $FILE
+if [ -z "$CC" ];
+then
+echo "**ERROR**: Could not find cc"; exit;
+fi
+
+UNAME=uname
+if [ -z "$UNAME" ];
+then
+echo "**ERROR**: Could not find uname"; exit;
+fi
+MACH=`"$UNAME" -m`
+for x in ix86 i386 i486 i586 i686 i386pc x86_64 ia64
+do
+if [ "$MACH" = "$x" ];
+then
+if [ "$x" = "x86_64" ] || [ "$x" = "ia64" ]
+then
+echo "You appear to have a $x based system --- linking fpu.s to fpu64.s"
+$RM -f fpu.s
+LN=ln
+$LN -s fpu64.s fpu.s
+DEFS="-Dx86 -m64"
+else
+echo "You appear to have a $x based system --- linking fpu.s to fpu32.s"
+$RM -f fpu.s
+LN=ln
+$LN -s fpu32.s fpu.s
+DEFS="-Dx86 -m32"
+fi
+fi
+done
+if [ -z "$DEFS" ];
+then
+echo "You do not appear to have an x86 based system --- not using fpu.s"
+$RM -f fpu.s
+$TOUCH fpu.s
+fi
+
+echo "DEFS = $DEFS" >> $FILE
+
+OPT="-O3" && echo "OPT = $OPT" >> $FILE
+
+echo "SRCS1 = analrank.c analytic.c compute.c compute2.c help.c" >> $FILE
+echo "SRCS2 = conductors.c disk.c ec_ap.c ec_ap_bsgs.c ec_ap_large.c" >> $FILE
+echo "SRCS3 = eulerfactors.c factor.c generate.c init_curve.c main.c" >> $FILE
+echo "SRCS4 = moddeg.c periods.c prepare.c QD.c rootno.c util.c" >> $FILE
+echo "SRCS = \$(SRCS1) \$(SRCS2) \$(SRCS3) \$(SRCS4)" >> $FILE
+echo "OBJS = \$(SRCS:.c=.o)" >> $FILE
+echo "OBJSf = \$(OBJS) fpu.o" >> $FILE
+echo "OTHER = new_data COPYING README Configure fpu32.s fpu64.s"  >> $FILE
+echo "OTHERgp = standard1.gp standard2.gp standard3.gp" >> $FILE
+echo "OTHERb = armd.gp ianalrank.gp ihmd.gp imd.gp armd.sh" >> $FILE
+echo "OTHERS = \$(OTHER) \$(OTHERgp) \$(OTHERb)" >> $FILE
+echo "HEADERS = sympow.h" >> $FILE
+echo "SRC = \$(SRCS) \$(HEADERS) \$(OTHERS)" >> $FILE
+echo "TILDES = *~ datafiles/*~" >> $FILE
+df="datafiles"
+echo "DATAFILES = $df/*M.txt $df/*S.txt $df/param_data" >> $FILE
+
+echo "RM = $RM" >> $FILE
+CP=cp && echo "CP = $CP" >> $FILE
+if [ -z "$CP" ];
+then
+echo "**ERROR**: Could not find cp"; exit;
+fi
+MKDIR=mkdir && echo "MKDIR = $MKDIR" >> $FILE
+if [ -z "$MKDIR" ];
+then
+echo "**ERROR**: Could not find mkdir"; exit;
+fi
+TOUCH=touch && echo "TOUCH = $TOUCH" >> $FILE
+if [ -z "$TOUCH" ];
+then
+echo "**ERROR**: Could not find touch"; exit;
+fi
+TAR=tar && echo "TAR = $TAR" >> $FILE
+if [ -z "$TAR" ];
+then
+echo "*WARNING*: Could not find tar --- source/archive omitted from Makefile";
+else
+echo "TARS = sympow.tar sympow.src.tar" >> $FILE
+echo "WDIR = SYMPOW-\$(VERSION)" >> $FILE && echo "" >> $FILE
+fi
+
+echo "all: sympow" >> $FILE
+echo "sympow: \$(OBJSf)" >> $FILE
+echo "	\$(MKDIR) -p datafiles" >> $FILE
+echo "	\$(TOUCH) datafiles/param_data" >> $FILE
+LINE="\$(CC) \$(OPT) \$(CFLAGS) -o \$@ \$(DEFS) \$(OBJSf) \$(LIBS)"
+echo "	$LINE" >> $FILE
+echo "fpu.o : fpu.s Makefile" >> $FILE
+echo "	\$(CC) \$(OPT) -c fpu.s" >> $FILE
+echo "%.o : %.c \$(HEADERS) Makefile" >> $FILE
+echo "	\$(CC) \$(OPT) \$(CFLAGS) \$(DEFS) -c -o \$@ \$<" >> $FILE
+echo "clean:" >> $FILE
+echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" fpu.s Makefile >> $FILE
+if [ -n "$TAR" ];
+then
+echo "source:" >> $FILE
+echo "	\$(MKDIR) \$(WDIR)" >> $FILE
+echo "	\$(CP) -f \$(SRC) \$(WDIR)" >> $FILE
+echo "	\$(TAR) cf sympow.src.tar \$(WDIR)/*" >> $FILE
+echo "	\$(RM) -rf \$(WDIR)" >> $FILE
+echo "archive:" >> $FILE
+echo "	\$(MKDIR) \$(WDIR)" >> $FILE
+echo "	\$(CP) -f \$(SRC) \$(WDIR)" >> $FILE
+echo "	\$(MKDIR) \$(WDIR)/datafiles" >> $FILE
+echo "	\$(CP) -f \$(DATAFILES) \$(WDIR)/datafiles" >> $FILE
+echo "	\$(TAR) cf sympow.tar \$(WDIR)/*" >> $FILE
+echo "	\$(RM) -rf \$(WDIR)" >> $FILE
+fi
+
+$RM -f Makefile
+$CP -f Makefile.new Makefile
+$RM -f Makefile.new
+
+echo "Makefile has been re-made. Use make if you wish to build SYMPOW"
+echo ""
+echo "**ATTENTION** If you wish build SYMPOW, please ensure beforehand"
+echo "that the various licenses of your C compiler, linker, assembler, etc."
+echo "allow you to create a derived work based on SYMPOW and your C libraries"

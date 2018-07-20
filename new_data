@@ -1,0 +1,28 @@
+#! /bin/sh
+#
+# This script should not need to be run directly,
+# but will be automatically executed via "./sympow -new_data []"
+#
+# example direct usages
+# sh new_data /bin/sh /usr/bin/gp '-sp 3 -dv 2'
+# sh new_data /bin/sh /usr/bin/gp '-cm -sp 4'
+# sh new_data /bin/sh /usr/bin/gp '-sp 2'
+# sh new_data /bin/sh /usr/bin/gp '-hecke -sp 3 -dv 1'
+
+if [ $# != 3 ];
+then
+echo "**ERROR**: Wrong number of input parameters"; exit;
+fi
+
+echo "Running the new_data script for $3"
+
+SH=$1 && GP=$2
+echo "Making the datafiles for $3" && echo "" &&
+./sympow -rewarp && ./sympow -shell1 "$3" &&
+./sympow -shell1 "$3" | $SH &&
+echo 'Running the gp script' && echo "" &&
+./sympow -pari "$3" &&
+./sympow -pari "$3" | $GP -q > /dev/null && echo "" &&
+./sympow -shell2 "$3" &&
+./sympow -shell2 "$3" | $SH &&
+./sympow -rewarp && echo "Finished with $3"

@@ -1,0 +1,161 @@
+
+SYMPOW is a package to compute special values of symmetric power elliptic
+curve L-functions. It can compute up to about 64 digits of precision.
+
+========================================================================
+
+The quad-double package was modified from David Bailey's package:
+ crd.lbl.gov/~dhbailey/mpdist/
+
+The squfof implementation was modified from Allan Steel's version
+of Arjen Lenstra's original LIP-based code.
+
+The ec_ap code was originally written for the kernel of MAGMA,
+but was modified to use small integers when possible.
+
+SYMPOW was originally developed using PARI, but due to licensing
+difficulties, this was eliminated. SYMPOW also does not use the
+standard math libraries, thus eliminating possible license conflicts.
+However, ths user should ensure that there are no C library license issues.
+
+SYMPOW still can use GP to compute the meshes of inverse Mellin transforms
+(this is done when a new symmetric power is added to datafiles), but the
+datafiles can alternatively be downloaded from the SYMPOW website.
+The current license for GP appears to allow this usage. Please ensure
+that the GP you have allows this.
+
+========================================================================
+
+Basic Usages:
+
+./sympow -sp 2p16 -curve "[1,2,3,4,5]"
+will compute L(Sym^2 E,edge) for E=[1,2,3,4,5] to 16 digits of precision
+The result
+ 2n0: 8.370510845377639E-01
+ 2w0: 8.370510845377586E-01
+consists of two calculations using different parameters to test the
+functional equation (to see if these are sufficiently close).
+
+./sympow -sp 3p12d2,4p8 -curve "[1,2,3,4,5]"
+will compute the 0th-2nd derivatives of L(Sym^3 E,center) to 12 digits
+and L(Sym^4 E,edge) to 8 digits
+
+Special cases: When a curve has CM, Hecke power can be used instead
+./sympow -sp 7p12d1 -hecke -curve "[0,0,1,-16758,835805]"
+will compute the 0th-1st derivatives of L(Sym^7 psi,special) to 12 digits
+
+Bloch-Kato numbers can be obtained for powers not congruent to 0 mod 4:
+./sympow -sp 2bp16 -curve "[1,2,3,4,5]"
+should return
+ 2n0: 4.640000000000006E+02
+ 2w0: 4.639999999999976E+02
+which can be seen to be very close to the integer 464.
+
+Modular degrees can be computed with the -moddeg option.
+./sympow -curve "[1,2,3,4,5]" -moddeg
+should return
+Modular Degree is 464
+
+Analytic ranks can be computed with the -analrank option.
+./sympow -curve "[1,2,3,4,5]" -analrank
+should return
+Analytic Rank is 1 : L'-value 3.51873e+00
+
+and (if the mesh file for the fifth derivative is present)
+./sympow -curve "[0,0,1,-79,342]" -analrank
+should return
+Analytic Rank is 5 : leading L-term 3.02857e+01
+
+========================================================================
+
+Adding new symmetric powers:
+
+SYMPOW keeps data for symmetric powers in the directory datafiles
+If a pre-computed mesh of inverse Mellin transform values is not
+available for a given symmetric power, SYMPOW will fail.
+If GP is available, the command
+./sympow -new_data 2
+will add the data for the 2nd symmetric power, while
+./sympow -new_data 3d2
+will add the data for the 2nd derivative and 3rd symmetric power,
+./sympow -new_data 6d0h
+will add the data for the 0th derivative of the 6th Hecke translate, and
+./sympow -new_data 4c
+will add data for the 4th symmetric power for curves with CM
+(these need to be done separately for powers divisible by 4).
+
+The mesh files are stored in binary form, and thus endian-ness is a
+worry when moving from one platform to another.
+
+To enable modular degree computations, the 2nd symmetric powers must be
+extant, and analytic rank requires derivatives of the 1st power. There are
+lower-precision datafiles in the sympow.tar distribution to expedite the
+computation of analytic rank and modular degree. These latter can also be
+re-generated in about 5-10 minutes via running armd.sh as a shell script.
+
+For higher precision, here is a test case; it gives 6.0e+2 to almost 64 digits:
+./sympow -sp 2bp64 -curve '[0,0,0,0,5]'
+
+For Hecke powers, the special value for the (2N-1)st power is computed
+using the datafile for the Nth translate, and the (2N)th power requires
+both the Nth and (N+1)st.
+
+========================================================================
+
+INSTALLATION:
+You will need to have sh and make, or their equivalents
+and rm, mkdir, tar, uname, cp, touch, and cc
+[or equivalents, but these must be modified in Configure]
+to build sympow. The shell commands cd, echo and which are also needed.
+The usage should just be:
+
+ sh Configure
+ make
+
+sympow will create a directory 'datafiles' of data for symmetric powers.
+New symmetric powers can be added as above, if grep, gp, and sed were
+available during the Configure.
+
+Needed header files are: stdio.h, stdlib.h, string.h, strings.h, unistd.h
+
+========================================================================
+
+NOTES:
+* Calculation of periods should not be trusted to the full 64 digits.
+* Analytic rank does not save the ap when more than 10^9 terms are needed:
+  in such a case, it is probably easier to run sympow as
+    ./sympow -sp 1w0p6D0,1w0p6D2,1w0p6D4,1w0p6D6,1w0p6D8
+  [for even signed curves, and however many derivatives are deemed
+   relevant, and to a desired precision] and parse the output.
+
+========================================================================
+
+ChangeLog/BugFixes:
+* VERSION 1.000 --- released [30 Nov 2005]
+* VERSION 1.001 --- release version with data included, so change generate.c
+                    compute moddeg with Hecke in CM case [5 Dec 2005]
+* VERSION 1.002 --- add multiplier to squfof (fix oo loop) [7 Dec 2005]
+* VERSION 1.003 --- moved some Configure stuff to config.h [10 Dec 2005]
+* VERSION 1.004 --- bug: QD_atan (mul by cos^2) & llint in binom [14 Dec 2005]
+* VERSION 1.005 --- binom and sbinom improved, *.gp's changed [16 Dec 2005]
+* VERSION 1.006 --- *.gp fixes, get_weight(llint), rootno.c [21 Dec 2005]
+* VERSION 1.007 --- fix TACKS bug for Hecke, change BK for Hecke [22 Dec 2005]
+* VERSION 1.008 --- removed mathlib support to try to help protect user
+                    from possible license violations [13 Jan 2006]
+* VERSION 1.009 --- added (conjectural) root numbers for higher powers,
+                    fixed analrank bug for precision of 9 [16 Jan 2006]
+* VERSION 1.010 --- moddeg bugs {v3(N)=4, M=32,64,128, 3-isog} [19 Jan 2006]
+* VERSION 1.011 --- reduce size of ar/md tables, fix kronll [23 Jan 2006]
+* VERSION 1.012 --- Fix new_data typo, add higher Hecke derivs,
+                    add zero check option (undocumented) [20 Feb 2006]
+* VERSION 1.013 --- Fix llint probs in ec_ap_large [23 Feb 2006]
+* VERSION 1.014 --- Fix years in ChangeLog, allocatemem(2^28) in standard1.gp
+                   (needed for 64-bit machines), add --help, etc. [1 Mar 2006]
+* VERSION 1.018 --- speed up ec_ap via idea of Geoff Bailey, use lesser prec
+                    in QD computations when possible, new fpu.c,
+		    -mdspeed option, -noqdcheck option [24 Apr 2006]
+* VERSION 1.019 --- getline -> getline0, 'which \cp' in config [11 May 2006]
+* VERSION 1.020 --- fixed periods.c bug, made armd.sh to re-make initial data
+* VERSION 1.021 --- fiddled with armd.sh, remove which in config, need /bin/sh
+* VERSION 1.022 --- added rounding in integer printing in QD.c [23 Feb 2009]
+* VERSION 1.023 --- fixed tame/wild conductors in Hecke case [28 Feb 2009]
