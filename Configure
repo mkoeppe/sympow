@@ -129,10 +129,13 @@ try_add_CFLAG()
 }
 
 # Let move to 21st century and add GNU features (asprintf)
-try_add_CFLAG '-std=gnu11' bypass
+try_add_CFLAG '-std=gnu17' bypass
 if [ $? -ne 0 ]; then
-    echo >&2 "Error: moving to 21st century and adding GNU feature are denied"
-    exit 1
+    try_add_CFLAG '-std=gnu11' bypass
+    if [ $? -ne 0 ]; then
+      echo >&2 "Error: moving to 21st century and adding GNU feature are denied"
+      exit 1
+    fi
 fi
 
 # These flags never hurt, so add them if possible
