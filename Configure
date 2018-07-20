@@ -234,6 +234,11 @@ fi
 
 echo "ENDIANTUPLE for SYMPOW: $ENDIANTUPLE"
 
+echo "CONFETA = config/endiantuple_ac.sh config/endiantuple.c.in" >> $FILE
+echo "CONFETC = config/endiantuple.c" >> $FILE
+echo "CONFEXE = config/endiantuple config/fpubits" >> $FILE
+echo "CONFO = \$(CONFETA) \$(CONFETC) \$(CONFEXE)" >> $FILE
+
 ##
 
 ##MACH=`"$UNAME" -m`
@@ -339,6 +344,11 @@ echo "clean:" >> $FILE
 ##echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" >> $FILE
 echo "	\$(RM) -f \$(OBJS) sympow sympow.1 \$(TILDES)" >> $FILE
 echo "	\$(RM) -rf datafiles" >> $FILE
+echo "distclean: clean" >> $FILE
+echo "	\$(RM) -rf config/autom4te.cache" >> $FILE
+echo "	\$(RM) -f config/config.status config/*.log" >> $FILE
+echo "	\$(RM) -f \$(CONFO) config/*.log" >> $FILE
+echo "	\$(RM) -f config.h Makefile" >> $FILE
 echo "install-arch: build-arch" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/bin" >> $FILE
 echo "	install -t \$(DESTDIR)$PREFIX/bin sympow" >> $FILE
