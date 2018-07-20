@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 if [ "$1" != "" ];
 then
@@ -7,7 +7,7 @@ fi
 
 FILE="Makefile.new"
 CONFIG="config.h"
-RM=rm
+RM=`which \rm`
 if [ -z "$RM" ];
 then
 echo "**ERROR**: Could not find rm"; exit;
@@ -19,86 +19,191 @@ echo "#define VERSION \"$VERSION\"" >> $CONFIG
 echo "VERSION = $VERSION" >> $FILE
 echo "#define RM \"$RM\"" >> $CONFIG
 
-GREP=grep && echo "#define GREP \"$GREP\"" >> $CONFIG
+GREP=`which \grep` && echo "#define GREP \"$GREP\"" >> $CONFIG
 if [ -z "$GREP" ];
 then
 echo "*WARNING*: Could not find grep --- will not be able to build new_data";
-echo "#define GREP grep" >> $CONFIG
+echo "#define GREP \"grep\"" >> $CONFIG
 fi
 
-GP=gp && echo "#define GP \"$GP\"" >> $CONFIG
+GP=`which \gp` && echo "#define GP \"$GP\"" >> $CONFIG
 if [ -z "$GP" ];
 then
 echo "*WARNING*: Could not find gp --- will not be able to build new_data";
-echo "#define GP gp" >> $CONFIG
+echo "#define GP \"gp\"" >> $CONFIG
 fi
 
-SED=sed && echo "#define SED \"$SED\"" >> $CONFIG
+SED=`which \sed` && echo "#define SED \"$SED\"" >> $CONFIG
 if [ -z "$SED" ];
 then
 echo "*WARNING*: Could not find sed --- will not be able to build new_data";
-echo "#define SED sed" >> $CONFIG
+echo "#define SED \"sed\"" >> $CONFIG
 fi
 
 [ -n "$GREP" ] && [ -n "$GP" ] && [ -n "$SED" ]\
  && echo "#define NEW_DATA" >> $CONFIG
 
-SH=sh && echo "#define SH \"$SH\"" >> $CONFIG
-if [ -z "$SH" ];
-then
-echo "**ERROR**: Could not find sh"; exit;
-fi
+SH=/bin/sh
+echo "#define SH \"$SH\"" >> $CONFIG
+echo "SH = $SH" >> $FILE
 
-CC=cc && echo "CC = $CC" >> $FILE
-if [ -z "$CC" ];
-then
-echo "**ERROR**: Could not find cc"; exit;
-fi
+CC=${CC:-gcc} && echo "CC = $CC" >> $FILE
+##if [ -z "$CC" ];
+##then
+##echo "**ERROR**: Could not find cc"; exit;
+##fi
+export CC
 
-UNAME=uname
-if [ -z "$UNAME" ];
-then
-echo "**ERROR**: Could not find uname"; exit;
-fi
-MACH=`"$UNAME" -m`
-for x in ix86 i386 i486 i586 i686 i386pc x86_64 ia64
-do
-if [ "$MACH" = "$x" ];
-then
-if [ "$x" = "x86_64" ] || [ "$x" = "ia64" ]
-then
-echo "You appear to have a $x based system --- linking fpu.s to fpu64.s"
-$RM -f fpu.s
-LN=ln
-$LN -s fpu64.s fpu.s
-DEFS="-Dx86 -m64"
-else
-echo "You appear to have a $x based system --- linking fpu.s to fpu32.s"
-$RM -f fpu.s
-LN=ln
-$LN -s fpu32.s fpu.s
-DEFS="-Dx86 -m32"
-fi
-fi
+##UNAME=`which \uname`
+##if [ -z "$UNAME" ];
+##then
+##echo "**ERROR**: Could not find uname"; exit;
+##fi
+
+## Sage material (spkg-install)
+#######################################################################
+# Fix FPU precision
+#######################################################################
+# SYMPOW really needs doubles to have *exactly* 53 bits precision,
+# they need to be true IEEE-754 double precision numbers.
+# In particular, we need to avoid 80 bits extended precision on i386
+# and we need to avoid fused multiply-add instructions (e.g. on ia64).
+# We might need to add various flags to CFLAGS to ensure this.
+# See Trac tickets #9703, #9734, #9166, #11226, #11920.
+
+ORIGINALCFLAGS=${CFLAGS}
+CFLAGS=''
+
+# Usage: try_add_CFLAG $FLAG
+# Try adding $FLAG to $CFLAGS, compile and run the fpubits program.
+# If it compiles and running it doesn't crash it (with an Illegal
+# Instruction for example), then we add $FLAG to $CFLAGS.
+# Return 0 if we added $FLAG and the FPU correctly used 53 bits,
+# return 1 if we added $FLAG but the FPU doesn't use 53 bits,
+# return 2 if we did not add $FLAG.
+try_add_CFLAG()
+{
+    # We use -O3 here to really force generation of fused
+    # multiply-add instructions and to keep floats as much as
+    # possible in registers.
+    # We compile in the fpu.c which only does
+    # something if the macro x86 is defined.
+		local flag=$1
+		local status=0
+    if $CC $ORIGINALCFLAGS $CFLAGS -O3 $flag config/fpubits1.c config/fpubits2.c fpu.c -o config/fpubits 2>/dev/null; then
+        # Compiled successfully, now run it
+        config/fpubits >/dev/null 2>/dev/null
+        status=$?
+        if [ $status -le 1 ]; then
+            # The program ran successfully.  For now, we don't need
+            # the exit status to be zero (indicating exactly 53 bits),
+            # we simply need the program not to crash (which would
+            # give an exit status > 128).
+            CFLAGS="$CFLAGS $flag"
+            return $status
+        fi
+    fi
+    return 2
+}
+
+# These flags never hurt, so add them if possible
+for FLAG in '-fno-fast-math' '-mfpmath=sse' '-Dx86'; do
+    try_add_CFLAG $FLAG
 done
-if [ -z "$DEFS" ];
-then
-echo "You do not appear to have an x86 based system --- not using fpu.s"
-$RM -f fpu.s
-$TOUCH fpu.s
+
+# Add at most one flag of the following to avoid gcc warnings:
+# gcc versions which support -ffp-contract deprecate -mno-fused-madd
+for FLAG in '-ffp-contract=on' '-mno-fused-madd'; do
+    try_add_CFLAG $FLAG && break
+done
+
+# Some flags to try as last resort.  These hurt performance, so only add
+# them if needed.
+for FLAG in '' '-ffloat-store' '-O0'; do
+    # Stop the loop if the FPU precision already is 53 bits
+    try_add_CFLAG $FLAG && break
+done
+
+# Check the actual FPU precision with our new flags.
+CC_ARGS="$ORIGINALCFLAGS -O3 $CFLAGS config/fpubits1.c config/fpubits2.c fpu.c -o config/fpubits"
+$CC $CC_ARGS
+if [ $? -ne 0 ]; then
+    echo >&2 "Error: the command below failed:"
+    echo >&2 "$CC $CC_ARGS"
+    exit 1
+fi
+export CFLAGS
+
+echo "CFLAGS for SYMPOW: $CFLAGS"
+
+config/fpubits
+status=$?
+if [ $status -eq 1 ]; then
+cat >&2 <<EOF
+Error: the Quad Double library used by SYMPOW assumes IEEE-754 double
+precision numbers with exactly 53 bits in the mantissa (64 bits in
+total).  Unfortunately, this is not the case on your system and we
+currently have no workaround for your system.  Running SYMPOW will
+almost certainly fail on some inputs.
+
+Please report this problem to sage-devel
+(http://groups.google.com/group/sage-devel), mentioning in particular
+your operating system, processor type and compiler version
+(run $CC --version).
+EOF
+elif [ $status -ne 0 ]; then
+cat >&2 <<EOF
+Error: something very bad happened while checking the precision of your
+FPU.  Please report this problem (mentioning any error messages above)
+to sage-devel (http://groups.google.com/group/sage-devel).
+Mention in particular your operating system and compiler version
+(run $CC --version).
+EOF
+exit 1
 fi
 
-echo "DEFS = $DEFS" >> $FILE
+##
 
-OPT="-O3" && echo "OPT = $OPT" >> $FILE
+##MACH=`"$UNAME" -m`
+##for x in ix86 i386 i486 i586 i686 i386pc x86_64 ia64
+##do
+##if [ "$MACH" = "$x" ];
+##then
+##if [ "$x" = "x86_64" ] || [ "$x" = "ia64" ]
+##then
+##echo "You appear to have a $x based system --- linking fpu.s to fpu64.s"
+##$RM -f fpu.s
+##LN=ln
+##$LN -s fpu64.s fpu.s
+##DEFS="-Dx86 -m64"
+##else
+##echo "You appear to have a $x based system --- linking fpu.s to fpu32.s"
+##$RM -f fpu.s
+##LN=ln
+##$LN -s fpu32.s fpu.s
+##DEFS="-Dx86 -m32"
+##fi
+##fi
+##done
+##if [ -z "$DEFS" ];
+##then
+##echo "You do not appear to have an x86 based system --- not using fpu.s"
+##$RM -f fpu.s
+##$TOUCH fpu.s
+##fi
+##
+##echo "DEFS = $DEFS" >> $FILE
 
+OPT="-O3 ${CFLAGS}" && echo "OPT = $OPT" >> $FILE
+
+echo "SRCS0 = fpu.c" >> $FILE
 echo "SRCS1 = analrank.c analytic.c compute.c compute2.c help.c" >> $FILE
 echo "SRCS2 = conductors.c disk.c ec_ap.c ec_ap_bsgs.c ec_ap_large.c" >> $FILE
 echo "SRCS3 = eulerfactors.c factor.c generate.c init_curve.c main.c" >> $FILE
 echo "SRCS4 = moddeg.c periods.c prepare.c QD.c rootno.c util.c" >> $FILE
-echo "SRCS = \$(SRCS1) \$(SRCS2) \$(SRCS3) \$(SRCS4)" >> $FILE
+echo "SRCS = \$(SRCS0) \$(SRCS1) \$(SRCS2) \$(SRCS3) \$(SRCS4)" >> $FILE
 echo "OBJS = \$(SRCS:.c=.o)" >> $FILE
-echo "OBJSf = \$(OBJS) fpu.o" >> $FILE
+##echo "OBJSf = \$(OBJS) fpu.o" >> $FILE
 echo "OTHER = new_data COPYING README Configure fpu32.s fpu64.s"  >> $FILE
 echo "OTHERgp = standard1.gp standard2.gp standard3.gp" >> $FILE
 echo "OTHERb = armd.gp ianalrank.gp ihmd.gp imd.gp armd.sh" >> $FILE
@@ -110,57 +215,57 @@ df="datafiles"
 echo "DATAFILES = $df/*M.txt $df/*S.txt $df/param_data" >> $FILE
 
 echo "RM = $RM" >> $FILE
-CP=cp && echo "CP = $CP" >> $FILE
+CP=`which \cp` && echo "CP = $CP" >> $FILE
 if [ -z "$CP" ];
 then
 echo "**ERROR**: Could not find cp"; exit;
 fi
-MKDIR=mkdir && echo "MKDIR = $MKDIR" >> $FILE
+MKDIR=`which \mkdir` && echo "MKDIR = $MKDIR" >> $FILE
 if [ -z "$MKDIR" ];
 then
 echo "**ERROR**: Could not find mkdir"; exit;
 fi
-TOUCH=touch && echo "TOUCH = $TOUCH" >> $FILE
+TOUCH=`which \touch` && echo "TOUCH = $TOUCH" >> $FILE
 if [ -z "$TOUCH" ];
 then
 echo "**ERROR**: Could not find touch"; exit;
 fi
-TAR=tar && echo "TAR = $TAR" >> $FILE
-if [ -z "$TAR" ];
-then
-echo "*WARNING*: Could not find tar --- source/archive omitted from Makefile";
-else
-echo "TARS = sympow.tar sympow.src.tar" >> $FILE
-echo "WDIR = SYMPOW-\$(VERSION)" >> $FILE && echo "" >> $FILE
-fi
+####TAR=`which \tar` && echo "TAR = $TAR" >> $FILE
+####if [ -z "$TAR" ];
+####then
+####echo "*WARNING*: Could not find tar --- source/archive omitted from Makefile";
+####else
+####echo "TARS = sympow.tar sympow.src.tar" >> $FILE
+####echo "WDIR = SYMPOW-\$(VERSION)" >> $FILE && echo "" >> $FILE
+####fi
 
 echo "all: sympow" >> $FILE
-echo "sympow: \$(OBJSf)" >> $FILE
+echo "sympow: \$(OBJS)" >> $FILE
 echo "	\$(MKDIR) -p datafiles" >> $FILE
 echo "	\$(TOUCH) datafiles/param_data" >> $FILE
-LINE="\$(CC) \$(OPT) \$(CFLAGS) -o \$@ \$(DEFS) \$(OBJSf) \$(LIBS)"
-echo "	$LINE" >> $FILE
-echo "fpu.o : fpu.s Makefile" >> $FILE
-echo "	\$(CC) \$(OPT) -c fpu.s" >> $FILE
+echo "	\$(CC) \$(CPPFLAGS) \$(CFLAGS) \$(OPT) -o \$@ \$(DEFS) \$(OBJS) \$(LDFLAGS) \$(LIBS)" >> $FILE
+##echo "fpu.o : fpu.s Makefile" >> $FILE
+##echo "	\$(CC) \$(OPT) -c fpu.s" >> $FILE
 echo "%.o : %.c \$(HEADERS) Makefile" >> $FILE
-echo "	\$(CC) \$(OPT) \$(CFLAGS) \$(DEFS) -c -o \$@ \$<" >> $FILE
+echo "	\$(CC) \$(CPPFLAGS) \$(CFLAGS) \$(OPT) \$(DEFS) -c -o \$@ \$<" >> $FILE
 echo "clean:" >> $FILE
-echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" fpu.s Makefile >> $FILE
-if [ -n "$TAR" ];
-then
-echo "source:" >> $FILE
-echo "	\$(MKDIR) \$(WDIR)" >> $FILE
-echo "	\$(CP) -f \$(SRC) \$(WDIR)" >> $FILE
-echo "	\$(TAR) cf sympow.src.tar \$(WDIR)/*" >> $FILE
-echo "	\$(RM) -rf \$(WDIR)" >> $FILE
-echo "archive:" >> $FILE
-echo "	\$(MKDIR) \$(WDIR)" >> $FILE
-echo "	\$(CP) -f \$(SRC) \$(WDIR)" >> $FILE
-echo "	\$(MKDIR) \$(WDIR)/datafiles" >> $FILE
-echo "	\$(CP) -f \$(DATAFILES) \$(WDIR)/datafiles" >> $FILE
-echo "	\$(TAR) cf sympow.tar \$(WDIR)/*" >> $FILE
-echo "	\$(RM) -rf \$(WDIR)" >> $FILE
-fi
+##echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" >> $FILE
+echo "	\$(RM) -f \$(OBJS) sympow \$(TILDES)" >> $FILE
+####if [ -n "$TAR" ];
+####then
+####echo "source:" >> $FILE
+####echo "	\$(MKDIR) \$(WDIR)" >> $FILE
+####echo "	\$(CP) -f \$(SRC) \$(WDIR)" >> $FILE
+####echo "	\$(TAR) cf sympow.src.tar \$(WDIR)/*" >> $FILE
+####echo "	\$(RM) -rf \$(WDIR)" >> $FILE
+####echo "archive:" >> $FILE
+####echo "	\$(MKDIR) \$(WDIR)" >> $FILE
+####echo "	\$(CP) -f \$(SRC) \$(WDIR)" >> $FILE
+####echo "	\$(MKDIR) \$(WDIR)/datafiles" >> $FILE
+####echo "	\$(CP) -f \$(DATAFILES) \$(WDIR)/datafiles" >> $FILE
+####echo "	\$(TAR) cf sympow.tar \$(WDIR)/*" >> $FILE
+####echo "	\$(RM) -rf \$(WDIR)" >> $FILE
+####fi
 
 $RM -f Makefile
 $CP -f Makefile.new Makefile
