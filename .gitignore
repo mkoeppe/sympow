@@ -1,0 +1,20 @@
+## generic
+*~
+
+## ./Configure
+/Makefile
+/config.h
+/config/autom4te.cache/
+/config/config.log
+/config/config.status
+/config/endiantuple
+/config/endiantuple.c
+/config/endiantuple.c.in
+/config/endiantuple_ac.log
+/config/endiantuple_ac.sh
+/config/fpubits
+
+## make
+/sympow
+/datafiles
+*.o
