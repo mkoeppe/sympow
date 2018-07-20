@@ -52,6 +52,18 @@ SH=/bin/sh
 echo "#define SH \"$SH\"" >> $CONFIG
 echo "SH = $SH" >> $FILE
 
+AUTOHEADER=`which \autoheader`
+if [ -z "$AUTOHEADER" ];
+then
+echo "**ERROR**: Could not find autoheader"; exit;
+fi
+
+AUTOCONF=`which \autoconf`
+if [ -z "$AUTOCONF" ];
+then
+echo "**ERROR**: Could not find autoconf"; exit;
+fi
+
 CC=${CC:-gcc} && echo "CC = $CC" >> $FILE
 ##if [ -z "$CC" ];
 ##then
@@ -183,6 +195,35 @@ Mention in particular your operating system and compiler version
 EOF
 exit 1
 fi
+
+##
+
+## inspired from fontconfig material (configure.ac and fcarch.h)
+#######################################################################
+# Determine architecture endianess-tuple
+#######################################################################
+( \
+cd config && \
+$AUTOHEADER endiantuple.ac && $AUTOCONF -o endiantuple_ac.sh endiantuple.ac && \
+$SH endiantuple_ac.sh > endiantuple_ac.log )
+if [ $? -ne 0 -o ! -f config/endiantuple.c ]; then
+    echo >&2 "Error: failed to generate config/endiantuple.c"
+    exit 1
+fi
+
+$CC -o config/endiantuple config/endiantuple.c
+if [ $? -ne 0 ]; then
+    echo >&2 "Error: the command below failed:"
+    echo >&2 "$CC -o config/endiantuple config/endiantuple.c"
+    exit 1
+fi
+ENDIANTUPLE=$(config/endiantuple) && echo "#define ENDIANTUPLE \"$ENDIANTUPLE\"" >> $CONFIG
+if [ -z "$ENDIANTUPLE" ]; then
+    echo >&2 "Error: could not determine the endian tuple"
+		exit 1
+fi
+
+echo "ENDIANTUPLE for SYMPOW: $ENDIANTUPLE"
 
 ##
 

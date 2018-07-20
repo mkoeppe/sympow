@@ -1,0 +1,53 @@
+dnl config/endiantuple.ac AutoConf adhoc script
+dnl
+dnl Inspired from fontconfig material (configure.ac and fcarch.h)
+dnl at the time of writing, Thu Oct 2 22:34:08 UTC 2014.
+dnl
+dnl Written for Debian on behalf of the Debian Science Team
+dnl by Jerome Benoit <calculus@rezozer.net>
+dnl
+dnl how to do:
+dnl $ autoheader endiantuple.ac
+dnl $ autoconf -o endiantuple_ac.sh endiantuple.ac
+dnl $ chmod a+x endiantuple_ac.sh
+dnl $ ./endiantuple_ac.sh
+dnl $ gcc -o endiantuple endiantuple.c
+dnl $ ./endiantuple
+dnl
+
+AC_INIT([adhoc],[2.71828],[calculus@rezozer.net])
+AC_CONFIG_HEADERS([endiantuple.c])
+
+dnl
+AC_C_BIGENDIAN
+AC_CHECK_SIZEOF([void *])
+AC_CHECK_ALIGNOF([double])
+
+AH_TOP([#include <stdio.h>])
+
+AH_BOTTOM([
+#if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN
+# define ADHOC_ARCH_ENDIAN "be"
+#else /* !WORDS_BIGENDIAN */
+# define ADHOC_ARCH_ENDIAN "le"
+#endif
+
+#if SIZEOF_VOID_P == 4
+# if ALIGNOF_DOUBLE == 4
+#  define ADHOC_ARCH_SIZE_ALIGN "32d4"
+# else /* ALIGNOF_DOUBLE != 4 */
+#  define ADHOC_ARCH_SIZE_ALIGN "32d8"
+# endif
+#else /* SIZEOF_VOID_P != 4 */
+# define ADHOC_ARCH_SIZE_ALIGN "64"
+#endif
+
+#define ADHOC_ENDIANTUPLE ADHOC_ARCH_ENDIAN ADHOC_ARCH_SIZE_ALIGN
+
+int main() { printf( ADHOC_ENDIANTUPLE "\n" ); return 0; }
+])
+
+
+AC_OUTPUT([])
+
+dnl eos
