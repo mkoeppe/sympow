@@ -111,11 +111,12 @@ void load_files(int which,int sp,int ep,int dv)
  NAME[6]='.'; NAME[7]='b'; NAME[8]='i'; NAME[9]='n'; NAME[10]='\0';
  if (((sp&3)==0) && CM_CASE) NAME[4]+=('a'-'A');
  strcpy(NM,NAME); NM[7]='t'; NM[8]='x'; NM[9]='t';
- if (pkgdatafilesdir) {sprintf(txtdatafiletemplate,"%s%s",datafilesdir,NM);
-  if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=datafilesbindir; edfd=datafilesdir; edm=datamode;}
-	else {sprintf(txtdatafiletemplate,"%s%s",pkgdatafilesdir,NM);
-   if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=pkgdatafilesbindir; edfd=pkgdatafilesdir; edm=pkgdatamode;}
-	 else {printf("%s entry inconsistency!\n",paramdatafile); exit(-1);}}}
+ sprintf(txtdatafiletemplate,"%s%s",datafilesdir,NM);
+ if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=datafilesbindir; edfd=datafilesdir; edm=datamode;}
+ else if (pkgdatafilesdir) {sprintf(txtdatafiletemplate,"%s%s",pkgdatafilesdir,NM);
+  if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=pkgdatafilesbindir; edfd=pkgdatafilesdir; edm=pkgdatamode;}
+  else {printf("%s entry inconsistency!\n",paramdatafile); exit(-1);}}
+ else {printf("%s entry inconsistency!\n",paramdatafile); exit(-1);}
  sprintf(bindatafiletemplate,"%s%s",edfbd,NAME);
  if (VERBOSE>=2) printf("%i Reading %s\n",which,bindatafiletemplate);
  A=fopen(bindatafiletemplate,"r");
