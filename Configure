@@ -77,6 +77,12 @@ export CC
 ##echo "**ERROR**: Could not find uname"; exit;
 ##fi
 
+HELP2MAN=`which \help2man` && echo "HELP2MAN = $HELP2MAN" >> $FILE
+if [ -z "$HELP2MAN" ];
+then
+echo "**ERROR**: Could not find help2man"; exit;
+fi
+
 ## Sage material (spkg-install)
 #######################################################################
 # Fix FPU precision
@@ -262,6 +268,13 @@ echo "ENDIANTUPLE for SYMPOW: $ENDIANTUPLE"
 
 OPT="-O3 ${CFLAGS}" && echo "OPT = $OPT" >> $FILE
 
+echo "H2MFLAGS = \\" >> $FILE
+echo "	--manual=\"SYMPOW package\" \\" >> $FILE
+echo "	--source=\"SYMPOW (\$(VERSION))\" \\" >> $FILE
+echo "	--help-option=-help \\" >> $FILE
+echo "	--version-option=-dump-versiontuple \\" >> $FILE
+echo "	--no-info" >> $FILE
+
 echo "SRCS0 = fpu.c" >> $FILE
 echo "SRCS1 = analrank.c analytic.c compute.c compute2.c help.c" >> $FILE
 echo "SRCS2 = conductors.c disk.c ec_ap.c ec_ap_bsgs.c ec_ap_large.c" >> $FILE
@@ -307,7 +320,7 @@ fi
 
 echo "default: build-arch" >> $FILE
 echo "all: build-arch build-indep" >> $FILE
-echo "build-arch: sympow" >> $FILE
+echo "build-arch: sympow sympow.1" >> $FILE
 echo "build-indep: datafiles/param_data" >> $FILE
 echo "sympow: \$(OBJS)" >> $FILE
 echo "	\$(CC) \$(CPPFLAGS) \$(CFLAGS) \$(OPT) -o \$@ \$(DEFS) \$(OBJS) \$(LDFLAGS) \$(LIBS)" >> $FILE
@@ -320,9 +333,11 @@ echo "	\$(MKDIR) -p datafiles" >> $FILE
 echo "	\$(TOUCH) datafiles/param_data" >> $FILE
 echo "	\$(SH) armd.sh" >> $FILE
 echo "	\$(SED) -i -e '/logfile =/d' datafiles/*.txt" >> $FILE
+echo "sympow.1: sympow" >> $FILE
+echo "	\$(HELP2MAN) \$(H2MFLAGS) -s 1 -n \"SYMPOW program\" -I sympow.h2m -o \$@ ./\$<" >> $FILE
 echo "clean:" >> $FILE
 ##echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" >> $FILE
-echo "	\$(RM) -f \$(OBJS) sympow \$(TILDES)" >> $FILE
+echo "	\$(RM) -f \$(OBJS) sympow sympow.1 \$(TILDES)" >> $FILE
 echo "	\$(RM) -rf datafiles" >> $FILE
 echo "install-arch: build-arch" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/bin" >> $FILE

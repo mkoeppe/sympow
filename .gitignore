@@ -17,4 +17,5 @@
 ## make
 /sympow
 /datafiles
+/sympow.1
 *.o
