@@ -63,6 +63,9 @@ void help_message()
  printf("               Examples: 1d3 2 2d1h 3d2 4 4c 5d0 6 7d0h 11d1 12c\n");
  printf("               NOTE: new_data runs a shell script that uses GP\n");
  printf("\n");
+ printf(" -dump-endiantuple  display the endian-tuple, used as a component\n");
+ printf("                    in the binary data paths, and exit\n");
+ printf("\n");
  printf(" -version      print program version and exit\n");
  printf(" -help         display this help and exit\n");
  printf("\n");

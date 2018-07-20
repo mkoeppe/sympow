@@ -3,7 +3,7 @@
 
 const char *VERBOSE2option[3]={"-quiet","-terse","-verbose"};
 
-void errorit(S) char *S; {printf("**ERROR** %s\n",S); exit(-1);}
+void errorit(S) char *S; {fprintf(stderr,"**ERROR** %s\n",S); exit(-1);}
 
 int u8(int x) {return(((x+7)>>3)<<3);}
 

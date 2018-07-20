@@ -5,6 +5,9 @@ then
 echo "**ERROR**: Configure does not take any options for SYMPOW"; exit;
 fi
 
+PREFIX="/usr/local"
+VARPREFIX="/var/local"
+
 FILE="Makefile.new"
 CONFIG="config.h"
 RM=`which \rm`
@@ -15,6 +18,8 @@ fi
 $RM -f $FILE
 $RM -f $CONFIG
 VERSION=1.023
+echo "#define PREFIX \"$PREFIX\"" >> $CONFIG
+echo "#define VARPREFIX \"$VARPREFIX\"" >> $CONFIG
 echo "#define VERSION \"$VERSION\"" >> $CONFIG
 echo "VERSION = $VERSION" >> $FILE
 echo "#define RM \"$RM\"" >> $CONFIG
@@ -111,10 +116,10 @@ try_add_CFLAG()
     return 2
 }
 
-# Let move to 21st century
-try_add_CFLAG '-std=c11' bypass
+# Let move to 21st century and add GNU features (asprintf)
+try_add_CFLAG '-std=gnu11' bypass
 if [ $? -ne 0 ]; then
-    echo >&2 "Error: move to 21st century is denied"
+    echo >&2 "Error: moving to 21st century and adding GNU feature are denied"
     exit 1
 fi
 
@@ -268,6 +273,13 @@ echo "	\$(CC) \$(CPPFLAGS) \$(CFLAGS) \$(OPT) \$(DEFS) -c -o \$@ \$<" >> $FILE
 echo "clean:" >> $FILE
 ##echo "	\$(RM) -f \$(OBJSf) sympow \$(TILDES) \$(TARS)" >> $FILE
 echo "	\$(RM) -f \$(OBJS) sympow \$(TILDES)" >> $FILE
+echo "install: all" >> $FILE
+echo "	install -d \$(DESTDIR)/$PREFIX/bin" >> $FILE
+echo "	install -d \$(DESTDIR)/$PREFIX/lib/sympow" >> $FILE
+echo "	install -d \$(DESTDIR)/$PREFIX/share/sympow" >> $FILE
+echo "	install -t \$(DESTDIR)/$PREFIX/bin sympow" >> $FILE
+echo "	install -t \$(DESTDIR)/$PREFIX/lib/sympow new_data" >> $FILE
+echo "	cp -t \$(DESTDIR)/$PREFIX/share/sympow standard1.gp standard2.gp standard3.gp" >> $FILE
 ####if [ -n "$TAR" ];
 ####then
 ####echo "source:" >> $FILE

@@ -26,10 +26,3 @@ grep -v '^\?' $x | sed 's/ E/e/' > .tempfile.123 &&\
 done
 cd ..
 
-echo 'Turning the text data files into binaries'
-for x in datafiles/*M.txt
-do
-NUM=`grep -c AT $x`
-./sympow -txt2bin $NUM ${x//txt/bin} < $x
-# rm -f $x
-done

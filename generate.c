@@ -1,6 +1,9 @@
 #include "sympow.h"
 #define DEBUG (FALSE || GLOBAL_DEBUG)
 
+#include <sys/stat.h>
+#include <sys/wait.h>
+
 char Mtxt1[16],Stxt1[16],Mtxt2[16],Stxt2[16],Mbin1[16],Mbin2[16];
 int HECKE=FALSE,sp=0,dv=0,CM=FALSE,HILO=FALSE;
 int N,mx,prec; char *F1,*F2;
@@ -86,7 +89,7 @@ static void pari_params()
 
 int assure_line(char *STR)
 {int i,j,k,l=strlen(STR); if (DEBUG) printf("assure_line %s\n",STR);
- if ((STR[0]!='P') && (STR[0]!='H') && (STR[0]!='A') 
+ if ((STR[0]!='P') && (STR[0]!='H') && (STR[0]!='A')
      && (STR[0]!='M') && (STR[0]!='m')) return 0;
  if ((STR[1]>'2') || (STR[1]<'0')) return 0;
  if (!ISA_NUMBER(STR[2])) return 0;
@@ -101,17 +104,23 @@ int assure_line(char *STR)
 
 void new_sympow_s1(char *A)
 {procit(A);
- printf("echo 'Removing any old data files'\n"); printf("cd datafiles\n");
- printf("%s -f %s %s %s\n",RM,Mtxt1,Stxt1,Mbin1);
- if (HILO) printf("%s -f %s %s %s\n",RM,Mtxt2,Stxt2,Mbin2); printf("cd ..\n");}
+ printf("echo 'Removing any old data files'\n");
+#define PROCNAME_RM_TXT(File) printf("%s %s -f %s/%s\n",RM,(VERBOSE?"-v":""),datafilesdir,File)
+#define PROCNAME_RM_BIN(File) printf("%s %s -f %s/%s\n",RM,(VERBOSE?"-v":""),datafilesbindir,File)
+ PROCNAME_RM_TXT(Mtxt1); PROCNAME_RM_TXT(Stxt1); PROCNAME_RM_BIN(Mbin1);
+ if (HILO) {PROCNAME_RM_TXT(Mtxt2); PROCNAME_RM_TXT(Stxt2); PROCNAME_RM_BIN(Mbin2);}
+#undef PROCNAME_RM_BIN
+#undef PROCNAME_RM_TXT
+ }
 
 void new_sympow_pari(char *A)
 {int i; procit(A); pari_params();
+ printf("PARAMDATAFILE=\"%s\";\n",paramdatafile);
  printf("N=%i; dv=%i; mx=%i;\n\\p %i\n",N,dv,mx,prec);
  Stxt1[4]='\0'; printf("STR=\"%s\";\n",Stxt1); Stxt1[4]='S';
- printf("\\r standard1.gp\n%s\n\\r standard2.gp\n",F1);
- printf("\\l datafiles/%s\n\\r standard3.gp\n",Mtxt1);
- printf("\\l datafiles/%s\n",Stxt1);
+ printf("\\r %s/standard1.gp\n%s\n\\r %s/standard2.gp\n",pkgdatadir,F1,pkgdatadir);
+ printf("\\l %s/%s\n\\r %s/standard3.gp\n",datafilesdir,Mtxt1,pkgdatadir);
+ printf("\\l %s/%s\n",datafilesdir,Stxt1);
  if (!HECKE) for (i=0;i<(1+sp)/2;i++) printf("coeffs(%i);\n",i);
  else printf("coeffs(0);\n");
  if (HECKE)
@@ -125,44 +134,59 @@ void new_sympow_pari(char *A)
   printf("\\q\n"); return;}
  if (sp&3) printf("coeffE(%i);\n",sp/2); else printf("coeffO(%i);\n",sp/2);
  Stxt2[4]='\0'; printf("STR=\"%s\";\n",Stxt2); Stxt2[4]='S';
- printf("\\r standard1.gp\n%s\n\\r standard2.gp\n",F2);
- printf("\\l datafiles/%s\n\\r standard3.gp\n",Mtxt2);
- printf("\\l datafiles/%s\n",Stxt2);
+ printf("\\r %s/standard1.gp\n%s\n\\r %s/standard2.gp\n",pkgdatadir,F2,pkgdatadir);
+ printf("\\l %s/%s\n\\r %s/standard3.gp\n",datafilesdir,Mtxt2,pkgdatadir);
+ printf("\\l %s/%s\n",datafilesdir,Stxt2);
  for (i=0;i<(1+sp)/2;i++) printf("coeffs(%i);\n",i);
  if (sp&3) printf("coeffO(%i);\n",sp/2); else printf("coeffE(%i);\n",sp/2);
  printf("\\q\n");}
 
 static void trimit(char *A)
-{printf("%s -v '^\?' %s | %s 's/ E/e/' > .tempfile.123\\\n",GREP,A,SED);
- printf(" && echo 'END' >> .tempfile.123 && mv .tempfile.123 %s\n",A);}
+{sprintf(txtdatafiletemplate,"%s/%s",datafilesdir,A);
+ chmod(txtdatafiletemplate,datamode); chown(txtdatafiletemplate,datauid,datagid);
+ printf("%s -i"
+   " -e '"
+     "/^\?/d"                           ";"
+     "/^(/d"                            ";"
+	   "/Warning:/d"                      ";"
+	   "/^About to find TOO_BIG/d"        ";"
+	   "/^Now working backwards/d"        ";"
+	   "/^Starting to write mesh files/d" ";"
+	   "s/ E/e/"                          ";"
+	   "$ a\\\nEND"
+	 "' %s\n",
+	SED,txtdatafiletemplate);
+ if (VERBOSE) printf("echo \"trimmed \\`%s'\"\n",txtdatafiletemplate);}
 
 void new_sympow_s2(char *A)
 {procit(A);
- printf("echo 'Trimming the data files'\n"); printf("cd datafiles\n");
+ printf("echo \"Trimming the data files\"\n");
  trimit(Mtxt1); trimit(Stxt1); if (HILO) {trimit(Mtxt2); trimit(Stxt2);}
+#if 0
  printf("echo 'Turning the meshes into binaries'\n");
- printf("NUM=`%s -c AT %s`\n",GREP,Mtxt1);
- printf("../sympow -txt2bin $NUM %s < %s\n",Mbin1,Mtxt1);
+ printf("NUM=`%s -c AT %s/%s`\n",GREP,datafilesdir,Mtxt1);
+ printf("%s -txt2bin $NUM %s/%s < %s/%s\n",invocationname,datafilesbindir,Mbin1,datafilesdir,Mtxt1);
  if (HILO)
- {printf("NUM=`%s -c AT %s`\n",GREP,Mtxt2);
-  printf("../sympow -txt2bin $NUM %s < %s\n",Mbin2,Mtxt2);}
- printf("cd ..\n");}
+ {printf("NUM=`%s -c AT %s/%s`\n",GREP,datafilesdir,Mtxt2);
+  printf("%s -txt2bin $NUM %s/%s < %s/%s\n",invocationname,datafilesbindir,Mbin2,datafilesdir,Mtxt2);}
+#endif
+ }
 
 void rewarp_params()
 {FILE *F; char PARAM[1024][64]; int j,i=0; char a0,a1,a2,a3;
- printf("Rewarping the param_data file\n");
- F=fopen("datafiles/param_data","r");
+ printf("Rewarping param_data file %s\n",paramdatafile);
+ F=fopen(paramdatafile,"r");
  while (1)
  {if (!getline0(F,PARAM[i],64)) break;
   if (!assure_line(PARAM[i]))
-  {printf("Found bad param_data: %s\n",PARAM[i]); continue;}
+  {printf("Found bad param_data %s in param_data file %s\n",PARAM[i],paramdatafile); continue;}
   a0=PARAM[i][0]; a1=PARAM[i][1]; a2=PARAM[i][2]; a3=PARAM[i][3];
   for (j=0;j<i;j++)
-  {if ((PARAM[j][0]==a0)  && (PARAM[j][1]==a1) 
+  {if ((PARAM[j][0]==a0)  && (PARAM[j][1]==a1)
        && (PARAM[j][2]==a2) && (PARAM[j][3]==a3))
     {strcpy(PARAM[j],PARAM[i]); i--; break;}} i++;}
- fclose(F); printf("Left with %i entries in param_data\n",i);
- F=fopen("datafiles/param_data","w");
+ fclose(F); printf("Left with %i entries in param_data file %s\n",i,paramdatafile);
+ F=fopen(paramdatafile,"w");
  for (j=0;j<i;j++) fprintf(F,"%s",PARAM[j]); fclose(F);}
 
 static void read_file_mesh(int mesh_count,double *P,FILE *R)
@@ -174,15 +198,19 @@ static void read_file_mesh(int mesh_count,double *P,FILE *R)
    {fscanf(R,"%s",INPUT);
     P[mesh_number*36*4+LPT_number*4+QD_num]=atof(INPUT);}}}}
 
-void txt2bin(int num,char *B,FILE *R)
-{double *P; FILE *F; P=malloc(36*4*num*sizeof(double));
- read_file_mesh(num,P,R); F=fopen(B,"w");
- fwrite(P,sizeof(double),36*4*num,F); fclose(F); free(P);}
+void txt2bin(int num,char *B,FILE *R,mode_t mode)
+{size_t size=36*4*num*sizeof(double); double *P=malloc(size);
+ int fd=-1; mode_t mask;
+ read_file_mesh(num,P,R);
+ mask=umask(0);
+ fd=open(B,(O_WRONLY|O_CREAT),mode); write(fd,P,size); close(fd);
+ umask(mask);
+ chown(B,datauid,datagid); free(P);}
 
 #include <unistd.h>
 
 void new_data(char *S)
-{char PATH[128]="new_data",ARGS[128]="",W[128]="";
+{char ARGS[128]="",W[128]="";
  int i=0,h=FALSE,c=FALSE,sp=0,dv=-1;
  if (ISA_NUMBER(S[i+1])) {sp=10*(S[i]-'0')+(S[i+1]-'0'); i=2;}
  else {sp=(S[i]-'0'); i=1;}
@@ -201,7 +229,9 @@ void new_data(char *S)
  else if (c) sprintf(ARGS,"-cm -sp %i",sp);
  else if (sp&1) sprintf(ARGS,"-sp %i -dv %i",sp,dv);
  else sprintf(ARGS,"-sp %i",sp);
- execlp(SH,SH,PATH,SH,GP,ARGS,NULL);}
+ setenv(SYMPOW_ENV_SYMPOW_PROG,invocationname,1);
+ setenv(SYMPOW_ENV_SYMPOW_OPTS_VERBOSITY,VERBOSE2option[VERBOSE],1);
+ execlp(SH,SH,newdatascript,SH,GP,ARGS,NULL);}
 
 int fork_new_data(char *S)
 {int STATUS=0; pid_t PID;

@@ -17,8 +17,8 @@ ch(x,C)=ev(P,x,C)-ev(P,x,C+20)
 setup(a,b)=for(i=0,31,doit(2^a+2^a*i/32,b));
 print("About to find TOO_BIG"); \\ ends up in /dev/null
 MM=100; while(log(10^(-70)+abs(ev(P,MM,N)))>-148,MM*=1.1);
-write1("datafiles/param_data",STR,",",precision(IEEE(MM),18));
+write1(PARAMDATAFILE,STR,",",precision(IEEE(MM),18));
 print("Now working backwards..."); \\ ends up in /dev/null
 l=-10; while(log(10^(-70)+abs(ch(2^l,20)))<-148,l+=1); l-=1; s=l;
-write1("datafiles/param_data",",",l-5); n=20;
+write1(PARAMDATAFILE,",",l-5); n=20;
 print("Starting to write mesh files"); \\ ends up in /dev/null

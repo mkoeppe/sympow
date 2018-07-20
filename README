@@ -28,7 +28,7 @@ that the GP you have allows this.
 
 Basic Usages:
 
-./sympow -sp 2p16 -curve "[1,2,3,4,5]"
+sympow -sp 2p16 -curve "[1,2,3,4,5]"
 will compute L(Sym^2 E,edge) for E=[1,2,3,4,5] to 16 digits of precision
 The result
  2n0: 8.370510845377639E-01
@@ -36,33 +36,33 @@ The result
 consists of two calculations using different parameters to test the
 functional equation (to see if these are sufficiently close).
 
-./sympow -sp 3p12d2,4p8 -curve "[1,2,3,4,5]"
+sympow -sp 3p12d2,4p8 -curve "[1,2,3,4,5]"
 will compute the 0th-2nd derivatives of L(Sym^3 E,center) to 12 digits
 and L(Sym^4 E,edge) to 8 digits
 
 Special cases: When a curve has CM, Hecke power can be used instead
-./sympow -sp 7p12d1 -hecke -curve "[0,0,1,-16758,835805]"
+sympow -sp 7p12d1 -hecke -curve "[0,0,1,-16758,835805]"
 will compute the 0th-1st derivatives of L(Sym^7 psi,special) to 12 digits
 
 Bloch-Kato numbers can be obtained for powers not congruent to 0 mod 4:
-./sympow -sp 2bp16 -curve "[1,2,3,4,5]"
+sympow -sp 2bp16 -curve "[1,2,3,4,5]"
 should return
  2n0: 4.640000000000006E+02
  2w0: 4.639999999999976E+02
 which can be seen to be very close to the integer 464.
 
 Modular degrees can be computed with the -moddeg option.
-./sympow -curve "[1,2,3,4,5]" -moddeg
+sympow -curve "[1,2,3,4,5]" -moddeg
 should return
 Modular Degree is 464
 
 Analytic ranks can be computed with the -analrank option.
-./sympow -curve "[1,2,3,4,5]" -analrank
+sympow -curve "[1,2,3,4,5]" -analrank
 should return
 Analytic Rank is 1 : L'-value 3.51873e+00
 
 and (if the mesh file for the fifth derivative is present)
-./sympow -curve "[0,0,1,-79,342]" -analrank
+sympow -curve "[0,0,1,-79,342]" -analrank
 should return
 Analytic Rank is 5 : leading L-term 3.02857e+01
 
@@ -74,13 +74,13 @@ SYMPOW keeps data for symmetric powers in the directory datafiles
 If a pre-computed mesh of inverse Mellin transform values is not
 available for a given symmetric power, SYMPOW will fail.
 If GP is available, the command
-./sympow -new_data 2
+sympow -new_data 2
 will add the data for the 2nd symmetric power, while
-./sympow -new_data 3d2
+sympow -new_data 3d2
 will add the data for the 2nd derivative and 3rd symmetric power,
-./sympow -new_data 6d0h
+sympow -new_data 6d0h
 will add the data for the 0th derivative of the 6th Hecke translate, and
-./sympow -new_data 4c
+sympow -new_data 4c
 will add data for the 4th symmetric power for curves with CM
 (these need to be done separately for powers divisible by 4).
 
@@ -94,7 +94,7 @@ computation of analytic rank and modular degree. These latter can also be
 re-generated in about 5-10 minutes via running armd.sh as a shell script.
 
 For higher precision, here is a test case; it gives 6.0e+2 to almost 64 digits:
-./sympow -sp 2bp64 -curve '[0,0,0,0,5]'
+sympow -sp 2bp64 -curve '[0,0,0,0,5]'
 
 For Hecke powers, the special value for the (2N-1)st power is computed
 using the datafile for the Nth translate, and the (2N)th power requires
@@ -124,7 +124,7 @@ NOTES:
 * Calculation of periods should not be trusted to the full 64 digits.
 * Analytic rank does not save the ap when more than 10^9 terms are needed:
   in such a case, it is probably easier to run sympow as
-    ./sympow -sp 1w0p6D0,1w0p6D2,1w0p6D4,1w0p6D6,1w0p6D8
+    sympow -sp 1w0p6D0,1w0p6D2,1w0p6D4,1w0p6D6,1w0p6D8
   [for even signed curves, and however many derivatives are deemed
    relevant, and to a desired precision] and parse the output.
 

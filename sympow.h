@@ -1,8 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <strings.h>
 #include "config.h"
+
+/* user level usage */
+#define SYMPOW_ENV_CACHEDIR    "SYMPOW_CACHEDIR"
+
+/* mainly for developping usage */
+#define SYMPOW_ENV_PKGDATADIR  "SYMPOW_PKGDATADIR"
+#define SYMPOW_ENV_PKGLIBDIR   "SYMPOW_PKGLIBDIR"
+#define SYMPOW_ENV_PKGCACHEDIR "SYMPOW_PKGCACHEDIR"
+
+/* internal usage */
+#define SYMPOW_ENV_SYMPOW_PROG           "SYMPOW_INVOCATIONNAME"
+#define SYMPOW_ENV_SYMPOW_OPTS_VERBOSITY "SYMPOW_OPTS_VERBOSITY"
+
+#ifndef PREFIX
+#define PREFIX "/usr/local"
+#endif
+
+#ifndef VARPREFIX
+#define VARPREFIX "/var/local"
+#endif
+
+#ifndef PKGFOLDER
+#define PKGFOLDER "sympow"
+#endif
+#ifndef PKGDATADIR
+#define PKGDATADIR PREFIX "/share/" PKGFOLDER
+#endif
+#ifndef PKGLIBDIR
+#define PKGLIBDIR PREFIX "/lib/" PKGFOLDER
+#endif
+#ifndef PKGCACHEDIR
+#define PKGCACHEDIR VARPREFIX "/cache/" PKGFOLDER
+#endif
+#ifndef PKGHOMECACHEDIR
+#define PKGHOMECACHEDIR "." PKGFOLDER
+#endif
+
+#ifndef ENDIANTUPLE
+#define ENDIANTUPLE "bin"
+#endif
 
 #define TRUE 1
 #define FALSE 0
@@ -19,6 +61,7 @@
 #define A0PT 20 /* about zero power series terms */
 #define minimum(a,b) ((a)<(b))?(a):(b)
 #define ISA_NUMBER(x) ((x>='0') && (x<='9'))
+#define MASK (S_IXUSR|S_IXGRP|S_IXOTH|S_ISVTX|S_ISUID|S_ISGID)
 
 typedef double QD[4];
 extern QD QD_pi,QD_twopi,QD_sqrtpi,QD_log2,QD_one,QD_e,QD_zero;
@@ -45,6 +88,24 @@ char *GET;
 int MAX_TABLE;
 
 const char *VERBOSE2option[3];
+
+mode_t pkgdatamode;
+mode_t datamode;
+uid_t datauid;
+gid_t datagid;
+char *invocationname;
+char *pkgdatadir;
+char *pkglibdir;
+char *pkgcachedir;
+char *pkgdatafilesdir;
+char *pkgdatafilesbindir;
+char *cachedir;
+char *datafilesdir;
+char *datafilesbindir;
+char *newdatascript;
+char *paramdatafile;
+char *bindatafiletemplate;
+char *txtdatafiletemplate;
 
 /* analrank.c */
 void prep_analrank(llint,int);
@@ -111,7 +172,7 @@ void new_sympow_s1(char*);
 void new_sympow_pari(char*);
 void new_sympow_s2(char*);
 void rewarp_params();
-void txt2bin(int,char*,FILE*);
+void txt2bin(int,char*,FILE*,mode_t);
 void new_data(char*);
 int fork_new_data(char*);
 

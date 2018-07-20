@@ -28,8 +28,8 @@ static int get_params(int which,int sp,int ep,int dv)
 #define PROCNAME_GET_PARAMS \
   if ((S[0]==LINE[0]) && (S[1]==LINE[1]) && (S[2]==LINE[2]) && (S[3]==LINE[3]) \
       && !assure_line(LINE)) \
-  {printf("Problem with datafiles/param_data for %s\n",S); \
-   errorit("datafiles/param_data entry corrupted!");} \
+  {printf("Problem with %s for %s\n",paramdatafile,S); \
+   printf("%s entry corrupted!\n",paramdatafile); exit(-1);} \
   STR=strtok(LINE,TOK); \
   if (!strcmp(STR,S)) \
   {if (VERBOSE>=2) printf("S Found: %s\n",S); \
@@ -62,7 +62,7 @@ static int get_params(int which,int sp,int ep,int dv)
  S[4]=0; strcpy(U,S);
  if (ANAL_RANK) {if (dv>0) U[0]='A'; else U[0]='m';}
  if (MODDEG) {if (HECKE) U[0]='m'; else U[0]='M';}
- F=fopen("datafiles/param_data","r");
+ F=fopen(paramdatafile,"r");
  while (1)
  {if (!getline0(F,LINE,64))
   {char HYPERINDEX[64]; int OFFSET=0;
@@ -74,18 +74,18 @@ static int get_params(int which,int sp,int ep,int dv)
 #ifdef NEW_DATA
    if (VERBOSE) printf("Will compute data mesh file for `%s'\n",HYPERINDEX);
    if (fork_new_data(HYPERINDEX))
-	  {printf("**ERROR** [FAILED]\nIt may be try with './sympow -new_data `%s'\n",HYPERINDEX); exit(-1);}
+	  {fprintf(stderr,"**ERROR** [FAILED]\nMay be tried with 'sympow -new_data `%s'\n",HYPERINDEX); exit(-1);}
    if (VERBOSE) printf("Has computed data mesh file for `%s'\n",HYPERINDEX);
 #else
-   printf("It can be added with './sympow -new_data `%s'\n",HYPERINDEX); exit(-1);
+   printf("Can be added with 'sympow -new_data `%s'\n",HYPERINDEX); exit(-1);
 #endif
    SROUND=TRUE; break;}
  PROCNAME_GET_PARAMS}
  if (SROUND)
- {F=freopen("datafiles/param_data","r",F);
+ {F=freopen(paramdatafile,"r",F);
   while (1)
   {if (!getline0(F,LINE,64))
-   {printf("**ERROR** %s not found in param_data file in second round\n",S); exit(-1);}
+   {fprintf(stderr,"**ERROR** %s not found in param_data file in second round\n",S); exit(-1);}
   PROCNAME_GET_PARAMS}}
  EXPAND0_LIM[which]=31.5*STEP_SIZE[which];
  fclose(F);
@@ -95,54 +95,73 @@ static int get_params(int which,int sp,int ep,int dv)
  return 32*ms;}
 
 void load_files(int which,int sp,int ep,int dv)
-{FILE *A,*N; char NM[32],NAME[32]="datafiles/P"; int dl=9;
+{FILE *A,*N; char NM[32],NAME[32]="/P";
+ char *edfbd=NULL,*edfd=NULL; mode_t edm=0666;
  if (DEBUG) printf("load_files %i %i %i %i\n",which,sp,ep,dv);
  SYMPOW[which]=sp; evalpt[which]=ep; derivative[which]=dv;
  if (!GLOBAL) return; MESH_COUNT[which]=get_params(which,sp,ep,dv);
- if (sp<10) {NAME[2+dl]='0'; NAME[3+dl]='0'+sp;}
- else {NAME[2+dl]='0'+sp/10; NAME[3+dl]='0'+(sp%10);}
- NAME[5+dl]='M';
- if (CHEAT) {if (ANAL_RANK) {if (dv>0) NAME[1+dl]='A'; else NAME[1+dl]='m';}
-             else if (HECKE) NAME[1+dl]='m'; else NAME[1+dl]='M';}
- if (sp&1) {if (dv==0) NAME[4+dl]='E'; if (dv==1) NAME[4+dl]='O';
- if (dv>1) NAME[4+dl]='0'+dv;}
- else {if (2*ep==sp) NAME[4+dl]='L'; else NAME[4+dl]='H';}
- NAME[6+dl]='.'; NAME[7+dl]='b'; NAME[8+dl]='i'; NAME[9+dl]='n'; NAME[10+dl]=0;
- if (((sp&3)==0) && CM_CASE) NAME[4+dl]+=('a'-'A');
- if (VERBOSE>=2) printf("%i Reading %s\n",which,NAME);
- A=fopen(NAME,"r");
+ if (sp<10) {NAME[2]='0'; NAME[3]='0'+sp;}
+ else {NAME[2]='0'+sp/10; NAME[3]='0'+(sp%10);}
+ NAME[5]='M';
+ if (CHEAT) {if (ANAL_RANK) {if (dv>0) NAME[1]='A'; else NAME[1]='m';}
+             else if (HECKE) NAME[1]='m'; else NAME[1]='M';}
+ if (sp&1) {if (dv==0) NAME[4]='E'; if (dv==1) NAME[4]='O';
+ if (dv>1) NAME[4]='0'+dv;}
+ else {if (2*ep==sp) NAME[4]='L'; else NAME[4]='H';}
+ NAME[6]='.'; NAME[7]='b'; NAME[8]='i'; NAME[9]='n'; NAME[10]='\0';
+ if (((sp&3)==0) && CM_CASE) NAME[4]+=('a'-'A');
+ strcpy(NM,NAME); NM[7]='t'; NM[8]='x'; NM[9]='t';
+ if (pkgdatafilesdir) {sprintf(txtdatafiletemplate,"%s%s",datafilesdir,NM);
+  if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=datafilesbindir; edfd=datafilesdir; edm=datamode;}
+	else {sprintf(txtdatafiletemplate,"%s%s",pkgdatafilesdir,NM);
+   if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=pkgdatafilesbindir; edfd=pkgdatafilesdir; edm=pkgdatamode;}
+	 else {printf("%s entry inconsistency!\n",paramdatafile); exit(-1);}}}
+ sprintf(bindatafiletemplate,"%s%s",edfbd,NAME);
+ if (VERBOSE>=2) printf("%i Reading %s\n",which,bindatafiletemplate);
+ A=fopen(bindatafiletemplate,"r");
  if (!A)
- {strcpy(NM,NAME); NM[7+dl]='t'; NM[8+dl]='x'; NM[9+dl]='t'; N=fopen(NM,"r");
-  if (VERBOSE) printf("Creating %s from %s\n",NAME,NM);
-  txt2bin(MESH_COUNT[which],NAME,N); A=fopen(NAME,"r"); fclose(N);}
+ {/*sprintf(txtdatafiletemplate,"%s%s",edfd,NM);*/ N=fopen(txtdatafiletemplate,"r");
+  if (VERBOSE) printf("Creating %s from %s\n",bindatafiletemplate,txtdatafiletemplate);
+  txt2bin(MESH_COUNT[which],bindatafiletemplate,N,edm);
+  A=fopen(bindatafiletemplate,"r"); fclose(N);}
  read_file_mesh_bin(A,which); fclose(A);
- NAME[5+dl]='S'; NAME[7+dl]='t'; NAME[8+dl]='x'; NAME[9+dl]='t';
- if (VERBOSE>=2) printf("%i Reading %s\n",which,NAME);
- A=fopen(NAME,"r"); read_file_series(A,which); fclose(A);}
+ NAME[5]='S'; NAME[7]='t'; NAME[8]='x'; NAME[9]='t';
+ sprintf(txtdatafiletemplate,"%s%s",edfd,NAME);
+ if (VERBOSE>=2) printf("%i Reading %s\n",which,txtdatafiletemplate);
+ A=fopen(txtdatafiletemplate,"r"); read_file_series(A,which); fclose(A);}
 
 void load_files_hecke(int which,int sp,int ep,int dv)
-{FILE *A,*N; char NM[32],NAME[32]="datafiles/H"; int dl=9;
+{FILE *A,*N; char NM[32],NAME[32]="/H";
+ char *edfbd=NULL,*edfd=NULL; mode_t edm=0666;
  if (DEBUG) printf("load_files_hecke %i %i %i %i\n",which,sp,ep,dv);
  if (ep==1) {load_files(which,1,1,dv); return;}
  SYMPOW[which]=sp; evalpt[which]=ep; derivative[which]=dv;
  if (!GLOBAL) return; MESH_COUNT[which]=get_params(which,sp,ep,dv);
- if (ep<10) {NAME[2+dl]='0'; NAME[3+dl]='0'+ep;}
- else {NAME[2+dl]='0'+ep/10; NAME[3+dl]='0'+(ep%10);}
- NAME[5+dl]='M'; if (CHEAT) NAME[1+dl]='m';
- if (dv==0) NAME[4+dl]='E'; if (dv==1) NAME[4+dl]='O';
- if (dv>1) NAME[4+dl]='0'+dv;
- NAME[6+dl]='.'; NAME[7+dl]='b'; NAME[8+dl]='i';
- NAME[9+dl]='n'; NAME[10+dl]=0;
- if (VERBOSE>=2) printf("%i Reading %s\n",which,NAME);
- A=fopen(NAME,"r");
+ if (ep<10) {NAME[2]='0'; NAME[3]='0'+ep;}
+ else {NAME[2]='0'+ep/10; NAME[3]='0'+(ep%10);}
+ NAME[5]='M'; if (CHEAT) NAME[1]='m';
+ if (dv==0) NAME[4]='E'; if (dv==1) NAME[4]='O';
+ if (dv>1) NAME[4]='0'+dv;
+ NAME[6]='.'; NAME[7]='b'; NAME[8]='i'; NAME[9]='n'; NAME[10]='\0';
+ strcpy(NM,NAME); NM[7]='t'; NM[8]='x'; NM[9]='t';
+ if (pkgdatafilesdir) {sprintf(txtdatafiletemplate,"%s%s",datafilesdir,NM);
+  if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=datafilesbindir; edfd=datafilesdir; edm=datamode;}
+	else {sprintf(txtdatafiletemplate,"%s%s",pkgdatafilesdir,NM);
+   if (!(access(txtdatafiletemplate,(R_OK|F_OK)))) {edfbd=pkgdatafilesbindir; edfd=pkgdatafilesdir; edm=pkgdatamode;}
+	 else {printf("%s entry inconsistency!\n",paramdatafile); exit(-1);}}}
+ sprintf(bindatafiletemplate,"%s%s",edfbd,NAME);
+ if (VERBOSE>=2) printf("%i Reading %s\n",which,bindatafiletemplate);
+ A=fopen(bindatafiletemplate,"r");
  if (!A)
- {strcpy(NM,NAME); NM[7+dl]='t'; NM[8+dl]='x'; NM[9+dl]='t'; N=fopen(NM,"r");
-  if (VERBOSE) printf("Creating %s from %s\n",NAME,NM);
-  txt2bin(MESH_COUNT[which],NAME,N); A=fopen(NAME,"r"); fclose(N);}
+ {/*sprintf(txtdatafiletemplate,"%s%s",edfd,NM);*/ N=fopen(txtdatafiletemplate,"r");
+  if (VERBOSE) printf("Creating %s from %s\n",bindatafiletemplate,txtdatafiletemplate);
+  txt2bin(MESH_COUNT[which],bindatafiletemplate,N,edm);
+  A=fopen(bindatafiletemplate,"r"); fclose(N);}
  read_file_mesh_bin(A,which); fclose(A);
- NAME[5+dl]='S'; NAME[7+dl]='t'; NAME[8+dl]='x'; NAME[9+dl]='t';
- if (VERBOSE>=2) printf("%i Reading %s\n",which,NAME);
- A=fopen(NAME,"r"); read_file_series(A,which); fclose(A);}
+ NAME[5]='S'; NAME[7]='t'; NAME[8]='x'; NAME[9]='t';
+ sprintf(txtdatafiletemplate,"%s%s",edfd,NAME);
+ if (VERBOSE>=2) printf("%i Reading %s\n",which,txtdatafiletemplate);
+ A=fopen(txtdatafiletemplate,"r"); read_file_series(A,which); fclose(A);}
 
 int getline0(FILE *F,char *v,int l)
 {GET=fgets(v,l,F); if (NULL==GET) return(0); return(1);}
