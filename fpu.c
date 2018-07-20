@@ -28,13 +28,35 @@ It does so without checking for pending unmasked floating-point
 exceptions. (A similar FSTCW checks for them first).
 */
 
-#ifdef x86
+/*
+ * Rrefreshed and revisited for Debian on behalf of the Debian Science Team
+ * by Jerome Benoit <calculus@rezozer.net>, 2014-10-07.
+ */
 
+#if defined(ISOC99_FENV)
+#include <fenv.h>
+#elif defined(FPUCONTROLH)
+#include <fpu_control.h>
+#define ADHOC__FPU_OR_MASK_EXTENDED (((fpu_control_t)(0x1) << 8) | ((fpu_control_t)(0x1) << 9))
+#define ADHOC__FPU_AND_MASK_DOUBLE (~((fpu_control_t)(0x1) << 8))
+#elif defined(x86)
 #define _SET_FPU_CONTROL_WORD(x) asm volatile ("fldcw %0": :"m" (x));
 #define _READ_FPU_CONTROL_WORD(x) asm volatile ("fnstcw %0":"=m" (x));
+#else
+#endif
 
 void fpu_53bits()
 {
+
+#if defined(ISOC99_FENV)
+    fesetprec(FE_DBLPREC);
+#elif defined(FPUCONTROLH)
+    fpu_control_t fpu_control=_FPU_DEFAULT;
+    _FPU_GETCW(fpu_control);
+    fpu_control|=ADHOC__FPU_OR_MASK_EXTENDED;
+    fpu_control&=ADHOC__FPU_AND_MASK_DOUBLE;
+		_FPU_SETCW(fpu_control);
+#elif defined(x86)
     /* The control word is 16 bits, numbered 0 to 15 */
     volatile unsigned short control_word;
 
@@ -42,5 +64,6 @@ void fpu_53bits()
     control_word=control_word & 0xfeff; /* Set bit 8 = 0 */
     control_word=control_word | 0x200; /* Set bit 9 = 1 */
     _SET_FPU_CONTROL_WORD(control_word); /* Force double-precision, 53-bit mantissa */
-}
 #endif
+
+}

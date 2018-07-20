@@ -8,7 +8,7 @@ int main(int argc,char **argv)
  NO_QT=FALSE; VERBOSE=TRUE; GLOBAL=TRUE; HECKE=FALSE; TWIST=FALSE; AP_SAVE=0;
  CM_CASE=FALSE; GET=malloc(1024); COND0=1; fp3=0; fp2=0; MAX_TABLE=1<<27;
  MODDEG=FALSE; ANAL_RANK=FALSE; ZEROCHECK=FALSE; RERUN=FALSE; QD_CHECK=TRUE;
-#ifdef x86
+#if defined(ISOC99_FENV) || defined(FPUCONTROLH) || defined(x86)
  fpu_53bits();
 #endif
  strcpy(TYPE,"RELEASE"); MD_SPEED=2.0;

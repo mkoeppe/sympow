@@ -88,9 +88,10 @@ try_add_CFLAG()
     # possible in registers.
     # We compile in the fpu.c which only does
     # something if the macro x86 is defined.
-		local flag=$1
-		local status=0
-    if $CC $ORIGINALCFLAGS $CFLAGS -O3 $flag config/fpubits1.c config/fpubits2.c fpu.c -o config/fpubits 2>/dev/null; then
+    local flag=$1                      # first argument:  C FLAG to test
+    local bypassfputest=${2:-nobypass} # second argument: whether or not bypass the numerical test (default: not)
+    local status=0
+    if $CC $ORIGINALCFLAGS -Werror $CFLAGS -O3 $flag config/fpubits1.c config/fpubits2.c fpu.c -o config/fpubits 2>/dev/null; then
         # Compiled successfully, now run it
         config/fpubits >/dev/null 2>/dev/null
         status=$?
@@ -100,20 +101,36 @@ try_add_CFLAG()
             # we simply need the program not to crash (which would
             # give an exit status > 128).
             CFLAGS="$CFLAGS $flag"
-            return $status
+            if [ "x$bypassfputest" = "xnobypass" ]; then
+                return $status
+            else
+                return 0
+            fi
         fi
     fi
     return 2
 }
 
+# Let move to 21st century
+try_add_CFLAG '-std=c11' bypass
+if [ $? -ne 0 ]; then
+    echo >&2 "Error: move to 21st century is denied"
+    exit 1
+fi
+
 # These flags never hurt, so add them if possible
-for FLAG in '-fno-fast-math' '-mfpmath=sse' '-Dx86'; do
-    try_add_CFLAG $FLAG
+for FLAG in '-fno-fast-math' '-mfpmath=sse'; do
+    try_add_CFLAG $FLAG bypass
 done
 
 # Add at most one flag of the following to avoid gcc warnings:
 # gcc versions which support -ffp-contract deprecate -mno-fused-madd
 for FLAG in '-ffp-contract=on' '-mno-fused-madd'; do
+    try_add_CFLAG $FLAG bypass && break
+done
+
+# Select the most appropriate FPU control scheme
+for FLAG in '-DISOC99_FENV' '-DFPUCONTROLH' '-Dx86'; do
     try_add_CFLAG $FLAG && break
 done
 

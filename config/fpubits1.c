@@ -6,17 +6,20 @@
  * return 1 if the precision is different from 53.
  */
 
+/*
+ * Revisited for Debian on behalf of the Debian Science Team
+ * by Jerome Benoit <calculus@rezozer.net>, 2014-10-07.
+ */
+
 #include <stdio.h>
 
 double mul_and_add(double, double, double);  /* config/fpubits2.c */
-void fpu_53bits();  /* src/fpu.c */
+void fpu_53bits();  /* fpu.c */
 
 int main(int argc, char** argv)
 {
-	/* If x86 is defined, set the FPU to 53 bits */
-#ifdef x86
+	/* Set the FPU to 53 bits if applicable */
 	fpu_53bits();
-#endif
 
         /* Let a = 1 + x,
          *     b = 1 + y,
