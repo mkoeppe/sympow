@@ -5,7 +5,7 @@ int main(int argc,char **argv)
 {char INSTRING[1024]="2w3s1p32,3bp16d1,4p8\0",CSTR[1024]="\0",LSTR[1024]="\0";
  char TYPE[16]; int i=1; llint NT,UB=(((llint) 1)<<45);
  int NO_CM=FALSE,info=0,ROOTNO=FALSE,SLOPPY=0,QD_CHECK;
- NO_QT=FALSE; VERBOSE=TRUE; GLOBAL=TRUE; HECKE=FALSE; TWIST=FALSE; AP_SAVE=0;
+ NO_QT=FALSE; VERBOSE=VERBOSE_DEFAULT; GLOBAL=TRUE; HECKE=FALSE; TWIST=FALSE; AP_SAVE=0;
  CM_CASE=FALSE; GET=malloc(1024); COND0=1; fp3=0; fp2=0; MAX_TABLE=1<<27;
  MODDEG=FALSE; ANAL_RANK=FALSE; ZEROCHECK=FALSE; RERUN=FALSE; QD_CHECK=TRUE;
 #if defined(ISOC99_FENV) || defined(FPUCONTROLH) || defined(x86)
@@ -13,11 +13,13 @@ int main(int argc,char **argv)
 #endif
  strcpy(TYPE,"RELEASE"); MD_SPEED=2.0;
  while(i<argc)
- {if (!strcmp(argv[i],"-quiet")) {VERBOSE=FALSE; i++;}
+ {if (!strcmp(argv[i],"-quiet")) {VERBOSE=0; i++;}
   else if ((!strcmp(argv[i],"-sympow")) || (!strcmp(argv[i],"-sp")))
   {strcpy(INSTRING,argv[i+1]); i+=2;}
+  else if (!strcmp(argv[i],"-terse")) {VERBOSE=1; i++;}
   else if (!strcmp(argv[i],"-verbose")) {VERBOSE=2; i++;}
   else if (!strcmp(argv[i],"-help")) help_message();
+  else if (!strcmp(argv[i],"-version")) { printf("%s\n",VERSION); exit(0);}
   else if (!strcmp(argv[i],"-curve")) {strcpy(CSTR,argv[i+1]); i+=2;}
   else if (!strcmp(argv[i],"-label")) {strcpy(LSTR,argv[i+1]); i+=2;}
   else if (!strcmp(argv[i],"-info")) {info=i+1; i+=3;}
@@ -47,7 +49,8 @@ int main(int argc,char **argv)
 	   (!strcmp(argv[i],"-new_data")))
     errorit("new_data not possible --- try re-configuring SYMPOW");
 #endif
-  else errorit("Command not recognised");}
+  else
+	 {printf("sympow: unrecognised command\nTry sympow -help for more information\n"); exit(-1);}}
 
  if (VERBOSE) printf("sympow %s %s  (c) Mark Watkins -",VERSION,TYPE);
  if (QD_CHECK) QD_check();

@@ -6,6 +6,7 @@
 
 #define TRUE 1
 #define FALSE 0
+#define VERBOSE_DEFAULT 1
 #define GLOBAL_DEBUG FALSE
 #define llint long long int
 #define ASSERT(x) {if (!(x)) errorit("Assertion failed");}
@@ -42,6 +43,8 @@ int WHICH,NUM_SUMS,fp3,fp2,*PRIMES,*RN;
 int *whi,*wlo,*SYMPOW,*NUM_WIGS,*BLOCH_KATO,*apsave;
 char *GET;
 int MAX_TABLE;
+
+const char *VERBOSE2option[3];
 
 /* analrank.c */
 void prep_analrank(llint,int);
