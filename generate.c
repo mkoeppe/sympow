@@ -201,6 +201,4 @@ void new_data(char *S)
  else if (c) sprintf(ARGS,"-cm -sp %i",sp);
  else if (sp&1) sprintf(ARGS,"-sp %i -dv %i",sp,dv);
  else sprintf(ARGS,"-sp %i",sp);
-#undef SH
-#define SH "/bin/sh"
- execl(SH,SH,PATH,SH,GP,ARGS,NULL);}
+ execlp(SH,SH,PATH,SH,GP,ARGS,NULL);}
