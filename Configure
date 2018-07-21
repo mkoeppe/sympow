@@ -6,7 +6,7 @@ echo "**ERROR**: Configure does not take any options for SYMPOW"; exit;
 fi
 
 PREFIX=${PREFIX:-"/usr/local"}
-VARPREFIX=${VARPREFIX:-"/var/local"}
+VARPREFIX=${VARPREFIX:-"/var"}
 
 FILE="Makefile.new"
 CONFIG="config.h"
