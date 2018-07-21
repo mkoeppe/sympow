@@ -351,6 +351,7 @@ echo "	\$(RM) -f \$(CONFO) config/*.log" >> $FILE
 echo "	\$(RM) -f config.h Makefile" >> $FILE
 echo "install-arch: build-arch" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/bin" >> $FILE
+echo "	install -d \$(DESTDIR)$PREFIX/share/man/man1" >> $FILE
 echo "	install -t \$(DESTDIR)$PREFIX/bin sympow" >> $FILE
 echo "	install -t \$(DESTDIR)$PREFIX/share/man/man1 sympow.1" >> $FILE
 echo "install-indep: build-indep" >> $FILE
