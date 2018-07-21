@@ -36,8 +36,34 @@ must be present.
 sh Configure
 make all
 make install
+make clean
 make distclean
 ```
+
+By default __SYMPOW__ is installed in the  `/usr/local` directory
+wrt to [FHS](https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard).
+More control is possible.
+
+```sh
+# HOME installation example
+PREFIX=${HOME} VARPREFIX=${HOME}/var sh Configure
+make all
+make install
+make distclean
+```
+
+```sh
+# example for package or system maintainers
+rm -rf _install
+PREFIX=/usr VARPREFIX=/var sh Configure
+make build-arch
+make build-indep
+make install-arch  DESTDIR=_install/ARCHX
+make install-indep DESTDIR=_install/INDEP
+make distclean
+```
+
+Maintainers want also read [README.data](README.data) .
 
 ## Usage examples
 
@@ -46,7 +72,7 @@ make distclean
 ```sh
 sympow -sp 2p16 -curve "[1,2,3,4,5]"
 ```
-will compute L(Sym^2 E,edge) for E=[1,2,3,4,5] to 16 digits of precision
+will compute L(Sym^2 E,edge) for E=[1,2,3,4,5] to 16 digits of precision.
 The result
 ```sh
  2n0: 8.370510845377639E-01
@@ -72,7 +98,7 @@ Special cases: When a curve has CM, Hecke power can be used instead
 ```sh
 sympow -sp 7p12d1 -hecke -curve "[0,0,1,-16758,835805]"
 ```
-will compute the 0th-1st derivatives of L(Sym^7 psi,special) to 12 digits
+will compute the 0th-1st derivatives of L(Sym^7 psi,special) to 12 digits.
 
 Bloch-Kato numbers can be obtained for powers not congruent to 0 mod 4:
 ```sh
@@ -94,7 +120,7 @@ should return
 Modular Degree is 464
 ```
 
-Analytic ranks can be computed with the -analrank option.
+Analytic ranks can be computed with the -analrank option:
 ```sh
 sympow -curve "[1,2,3,4,5]" -analrank
 ```
@@ -102,7 +128,6 @@ should return
 ```sh
 Analytic Rank is 1 : L'-value 3.51873e+00
 ```
-
 and (if the mesh file for the fifth derivative is present)
 ```sh
 sympow -curve "[0,0,1,-79,342]" -analrank
@@ -159,9 +184,11 @@ both the Nth and (N+1)st.
 * Calculation of periods should not be trusted to the full 64 digits.
 * Analytic rank does not save the ap when more than 10^9 terms are needed:
   in such a case, it is probably easier to run sympow as
+
 ```sh
     sympow -sp 1w0p6D0,1w0p6D2,1w0p6D4,1w0p6D6,1w0p6D8
 ```
+
   [for even signed curves, and however many derivatives are deemed
    relevant, and to a desired precision] and parse the output.
 
