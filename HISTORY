@@ -43,3 +43,4 @@ ChangeLog/BugFixes:
                       - determine ENDIANTUPLE at Configure time (origin: Debian)
                       - version-tuple support (origin: Debian)
                       [20 Jul 2018]
+* VERSION 2.023.2 --- minor fixes and improvements to ease maintainer life [21 Jul 2018]
