@@ -63,6 +63,8 @@ make install-indep DESTDIR=_install/INDEP
 make distclean
 ```
 
+Maintainers want also read [README.md](README.md#sympow-data-setup) .
+
 ## Usage examples
 
 ### basic usages
@@ -177,7 +179,7 @@ For Hecke powers, the special value for the (2N-1)st power is computed
 using the datafile for the Nth translate, and the (2N)th power requires
 both the Nth and (N+1)st.
 
-## Notes
+## Computation notes
 
 * Calculation of periods should not be trusted to the full 64 digits.
 * Analytic rank does not save the ap when more than 10^9 terms are needed:
