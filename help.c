@@ -65,7 +65,7 @@ void help_message()
  printf("\n");
  printf(" -dump-endiantuple  display the endian-tuple, used as a component\n");
  printf("                    in the binary data paths, and exit\n");
- printf(" -dump-versiontuple display the version-tuple (Major.minor) and exit\n");
+ printf(" -dump-versiontuple display the version-tuple (Major.minor.micro) and exit\n");
  printf("\n");
  printf(" -version      print program version and exit\n");
  printf(" -help         display this help and exit\n");
