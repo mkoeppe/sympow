@@ -63,7 +63,7 @@ make install-indep DESTDIR=_install/INDEP
 make distclean
 ```
 
-Maintainers want also read [README.data](README.data) .
+Maintainers want also read [README-data.md](README-data.md) .
 
 ## Usage examples
 
