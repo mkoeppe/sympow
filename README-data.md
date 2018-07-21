@@ -11,7 +11,7 @@ The user-computed plain data mesh files and their binary counter parts,
 are placed by default in the cache directory `HOME/.sympow` . This
 default/ historical cache folder can be overridden through the environment
 variable `SYMPOW_CACHEDIR`: the basename of the so passed path is assumed
-to begin with `sympow', otherwise the effective path is assumed to be
+to begin with `sympow`, otherwise the effective path is assumed to be
 `SYMPOW_CACHEDIR/sympow`.
 
 If the cache folder `SYMPOW_CACHEDIR` (or `SYMPOW_CACHEDIR/sympow`) does not
