@@ -63,7 +63,7 @@ make install-indep DESTDIR=_install/INDEP
 make distclean
 ```
 
-Maintainers want also read [README.md](README.md#sympow-data-setup) .
+Maintainers want also read the [SYMPOW Data setup](README.md#sympow-data-setup) section.
 
 ## Usage examples
 
