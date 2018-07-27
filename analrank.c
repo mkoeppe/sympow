@@ -5,7 +5,7 @@ static int primes_upper_bound(llint x)
 {double X=(double) x; return (int) (X/Log(X)*(1.0+1.2762/Log(X)));}
 
 void prep_analrank(llint UB,int sl)
-{char STR[128]="1w0s0p06D0",S[128]; llint NU,NT; double f; int l,w1;
+{char STR[11]="1w0s0p06D0",S[55]; llint NU,NT; double f; int l,w1;
  l=(int) Floor(Log10(REAL_PERIOD[0])); if (l>0) l=0;
  if (l<-10-sl) {l=-10-sl; printf("*WARNING* possible precision truncation\n");}
  STR[7]-=l; while (STR[7]>'9') {STR[7]-=10; STR[6]++;}
