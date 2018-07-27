@@ -44,3 +44,4 @@ ChangeLog/BugFixes:
                       - version-tuple support (origin: Debian)
                       [20 Jul 2018]
 * VERSION 2.023.2 --- minor fixes and improvements to ease maintainer life [21 Jul 2018]
+* VERSION 2.023.3 --- fixed sprintf overflow in prep_analrank [27 Jul 2018]
