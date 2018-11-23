@@ -55,7 +55,7 @@ make distclean
 ```sh
 # example for package or system maintainers
 rm -rf _install
-PREFIX=/usr VARPREFIX=/var sh Configure
+ADDBINPATH=yes PREFIX=/usr VARPREFIX=/var sh Configure
 make build-arch
 make build-indep
 make install-arch  DESTDIR=_install/ARCHX

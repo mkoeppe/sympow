@@ -5,6 +5,8 @@ then
 echo "**ERROR**: Configure does not take any options for SYMPOW"; exit;
 fi
 
+ADDBINPATH=${ADDBINPATH:-"yes"}
+
 PREFIX=${PREFIX:-"/usr/local"}
 VARPREFIX=${VARPREFIX:-"/var"}
 
@@ -17,32 +19,40 @@ echo "**ERROR**: Could not find rm"; exit;
 fi
 $RM -f $FILE
 $RM -f $CONFIG
-VERSION=2.023.3
+VERSION=2.023.4
 echo "#define PREFIX \"$PREFIX\"" >> $CONFIG
 echo "#define VARPREFIX \"$VARPREFIX\"" >> $CONFIG
 echo "#define VERSION \"$VERSION\"" >> $CONFIG
 echo "VERSION = $VERSION" >> $FILE
-echo "#define RM \"$RM\"" >> $CONFIG
 
-GREP=`which \grep` && echo "#define GREP \"$GREP\"" >> $CONFIG
+GREP=`which \grep`
 if [ -z "$GREP" ];
 then
-echo "*WARNING*: Could not find grep --- will not be able to build new_data";
-echo "#define GREP \"grep\"" >> $CONFIG
+echo "*WARNING*: Could not find grep --- will not be able to build new_data"
 fi
 
-GP=`which \gp` && echo "#define GP \"$GP\"" >> $CONFIG
+GP=`which \gp`
 if [ -z "$GP" ];
 then
-echo "*WARNING*: Could not find gp --- will not be able to build new_data";
-echo "#define GP \"gp\"" >> $CONFIG
+echo "*WARNING*: Could not find gp --- will not be able to build new_data"
 fi
 
-SED=`which \sed` && echo "#define SED \"$SED\"" >> $CONFIG && echo "SED = $SED" >> $FILE
+SED=`which \sed` && echo "SED = $SED" >> $FILE
 if [ -z "$SED" ];
 then
-echo "*WARNING*: Could not find sed --- will not be able to build new_data";
-echo "#define SED \"sed\"" >> $CONFIG
+echo "*WARNING*: Could not find sed --- will not be able to build new_data"
+fi
+
+if [ "x$ADDBINPATH" = "xyes" ]; then
+echo "#define RM \"$RM\"" >> $CONFIG
+[ -n "$GREP" ] && echo "#define GREP \"$GREP\"" >> $CONFIG
+[ -n "$GP" ] && echo "#define GP \"$GP\"" >> $CONFIG
+[ -n "$SED" ] && echo "#define SED \"$SED\"" >> $CONFIG
+else
+echo "#define RM \"rm\"" >> $CONFIG
+[ -n "$GREP" ] && echo "#define GREP \"grep\"" >> $CONFIG
+[ -n "$GP" ] && echo "#define GP \"gp\"" >> $CONFIG
+[ -n "$SED" ] && echo "#define SED \"sed\"" >> $CONFIG
 fi
 
 [ -n "$GREP" ] && [ -n "$GP" ] && [ -n "$SED" ]\
