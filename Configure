@@ -19,7 +19,7 @@ echo "**ERROR**: Could not find rm"; exit;
 fi
 $RM -f $FILE
 $RM -f $CONFIG
-VERSION=2.023.4
+VERSION=2.023.5
 echo "#define PREFIX \"$PREFIX\"" >> $CONFIG
 echo "#define VARPREFIX \"$VARPREFIX\"" >> $CONFIG
 echo "#define VERSION \"$VERSION\"" >> $CONFIG
@@ -362,15 +362,15 @@ echo "	\$(RM) -f config.h Makefile" >> $FILE
 echo "install-arch: build-arch" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/bin" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/share/man/man1" >> $FILE
-echo "	install -t \$(DESTDIR)$PREFIX/bin sympow" >> $FILE
-echo "	install -t \$(DESTDIR)$PREFIX/share/man/man1 sympow.1" >> $FILE
+echo "	install -m 0755 sympow \$(DESTDIR)$PREFIX/bin" >> $FILE
+echo "	install -m 0644 sympow.1 \$(DESTDIR)$PREFIX/share/man/man1" >> $FILE
 echo "install-indep: build-indep" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/lib/sympow" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/share/sympow" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/share/sympow/datafiles" >> $FILE
-echo "	install -t \$(DESTDIR)$PREFIX/lib/sympow new_data" >> $FILE
-echo "	cp -t \$(DESTDIR)$PREFIX/share/sympow standard1.gp standard2.gp standard3.gp" >> $FILE
-echo "	cp -t \$(DESTDIR)$PREFIX/share/sympow/datafiles datafiles/*.txt datafiles/param_data" >> $FILE
+echo "	install -m 0755 new_data \$(DESTDIR)$PREFIX/lib/sympow" >> $FILE
+echo "	install -m 0644 standard1.gp standard2.gp standard3.gp \$(DESTDIR)$PREFIX/share/sympow" >> $FILE
+echo "	install -m 0644 datafiles/*.txt datafiles/param_data \$(DESTDIR)$PREFIX/share/sympow/datafiles" >> $FILE
 echo "install: install-arch install-indep" >> $FILE
 ####if [ -n "$TAR" ];
 ####then

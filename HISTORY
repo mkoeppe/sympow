@@ -47,3 +47,4 @@ ChangeLog/BugFixes:
 * VERSION 2.023.3 --- fixed sprintf overflow in prep_analrank [27 Jul 2018]
 * VERSION 2.023.4 --- add ADDBINPATH self-explanatory environment-variable-yesno-option
                       in Configure (default: yes) [23 Nov 2018]
+* VERSION 2.023.5 --- harden installation [24 Nov 2018]
