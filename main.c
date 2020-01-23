@@ -8,6 +8,29 @@
 
 #define PARAMSIZE (1024*64)
 
+QD ***TABLE,***POWSER,*DECAY,**TACKS,*WIGGLE,*WIGSQI;
+double *TOO_BIG,*EXPAND0_LIM,*STEP_SIZE,MD_SPEED;
+int *evalpt,*derivative,*NUM_LOGS,*HALF_ZERO;
+int *TACKON,SLOPPY[CURR_MAX],*MESH_COUNT;
+QD VOLUME,SCALE,TW_EFF;
+llint CONDTW,EVEN_TOP,EVEN_BOTTOM;
+int MANIN,MANIN_TWIST,ZEROCHECK,RERUN,MODDEG;
+
+int VERBOSE,GLOBAL,NO_QT,TWIST,AP_SAVE,CM_CASE,CM_TWIST,ANAL_RANK;
+int *w,*wprec; /* precision indicator */
+llint *badprimes;
+int *badprimetype;
+QD COND[CURR_MAX],REAL_PERIOD,IMAG_PERIOD;
+llint COND0;
+QD Ea1,Ea2,Ea3,Ea4,Ea6,Eb2,Eb4,Eb6,Ec4,Ec6,Edisc,Etw4,Etw6,EtwD;
+int C4C6LL;
+llint Ec4ll,Ec6ll;
+
+int WHICH,NUM_SUMS,fp3,fp2,*PRIMES,*RN;
+int *whi,*wlo,*SYMPOW,*NUM_WIGS,*BLOCH_KATO,*apsave;
+char *GET;
+int MAX_TABLE;
+
 mode_t pkgdatamode=0666;
 mode_t datamode=0666;
 uid_t datauid=0;

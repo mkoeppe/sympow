@@ -74,44 +74,48 @@ extern QD QD_pi,QD_twopi,QD_sqrtpi,QD_log2,QD_one,QD_e,QD_zero;
 typedef struct {int deg; QD *coeff;} QDpoly;
 typedef struct {llint p[16]; int e[16];} LIST;
 
-QD ***TABLE,***POWSER,*DECAY,**TACKS,*WIGGLE,*WIGSQI;
-double *TOO_BIG,*EXPAND0_LIM,*STEP_SIZE,MD_SPEED;
-int *evalpt,*derivative,*NUM_LOGS,*HALF_ZERO;
-int *TACKON,SLOPPY[CURR_MAX],*MESH_COUNT;
-QD VOLUME,SCALE,TW_EFF; llint CONDTW,EVEN_TOP,EVEN_BOTTOM;
-int MANIN,MANIN_TWIST,ZEROCHECK,RERUN,MODDEG;
+extern QD ***TABLE,***POWSER,*DECAY,**TACKS,*WIGGLE,*WIGSQI;
+extern double *TOO_BIG,*EXPAND0_LIM,*STEP_SIZE,MD_SPEED;
+extern int *evalpt,*derivative,*NUM_LOGS,*HALF_ZERO;
+extern int *TACKON,SLOPPY[CURR_MAX],*MESH_COUNT;
+extern QD VOLUME,SCALE,TW_EFF;
+extern llint CONDTW,EVEN_TOP,EVEN_BOTTOM;
+extern int MANIN,MANIN_TWIST,ZEROCHECK,RERUN,MODDEG;
 
-int VERBOSE,GLOBAL,HECKE,NO_QT,TWIST,AP_SAVE,CM_CASE,CM_TWIST,ANAL_RANK;
-int *w,*wprec; /* precision indicator */
-llint *badprimes; int *badprimetype;
-QD COND[CURR_MAX],REAL_PERIOD,IMAG_PERIOD; llint COND0;
-QD Ea1,Ea2,Ea3,Ea4,Ea6,Eb2,Eb4,Eb6,Ec4,Ec6,Edisc,Etw4,Etw6,EtwD;
-int C4C6LL; llint Ec4ll,Ec6ll;
+extern int VERBOSE,GLOBAL,HECKE,NO_QT,TWIST,AP_SAVE,CM_CASE,CM_TWIST,ANAL_RANK;
+extern int *w,*wprec; /* precision indicator */
+extern llint *badprimes;
+extern int *badprimetype;
+extern QD COND[CURR_MAX],REAL_PERIOD,IMAG_PERIOD;
+extern llint COND0;
+extern QD Ea1,Ea2,Ea3,Ea4,Ea6,Eb2,Eb4,Eb6,Ec4,Ec6,Edisc,Etw4,Etw6,EtwD;
+extern int C4C6LL;
+extern llint Ec4ll,Ec6ll;
 
-int WHICH,NUM_SUMS,fp3,fp2,*PRIMES,*RN;
-int *whi,*wlo,*SYMPOW,*NUM_WIGS,*BLOCH_KATO,*apsave;
-char *GET;
-int MAX_TABLE;
+extern int WHICH,NUM_SUMS,fp3,fp2,*PRIMES,*RN;
+extern int *whi,*wlo,*SYMPOW,*NUM_WIGS,*BLOCH_KATO,*apsave;
+extern char *GET;
+extern int MAX_TABLE;
 
-const char *VERBOSE2option[3];
+extern const char *VERBOSE2option[3];
 
-mode_t pkgdatamode;
-mode_t datamode;
-uid_t datauid;
-gid_t datagid;
-char *invocationname;
-char *pkgdatadir;
-char *pkglibdir;
-char *pkgcachedir;
-char *pkgdatafilesdir;
-char *pkgdatafilesbindir;
-char *cachedir;
-char *datafilesdir;
-char *datafilesbindir;
-char *newdatascript;
-char *paramdatafile;
-char *bindatafiletemplate;
-char *txtdatafiletemplate;
+extern mode_t pkgdatamode;
+extern mode_t datamode;
+extern uid_t datauid;
+extern gid_t datagid;
+extern char *invocationname;
+extern char *pkgdatadir;
+extern char *pkglibdir;
+extern char *pkgcachedir;
+extern char *pkgdatafilesdir;
+extern char *pkgdatafilesbindir;
+extern char *cachedir;
+extern char *datafilesdir;
+extern char *datafilesbindir;
+extern char *newdatascript;
+extern char *paramdatafile;
+extern char *bindatafiletemplate;
+extern char *txtdatafiletemplate;
 
 /* analrank.c */
 void prep_analrank(llint,int);
