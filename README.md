@@ -313,5 +313,5 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ### forked code
 
-Copyright: 2018 Jerome G. M. Benoit <jgmbenoit@rezozer.net>
+Copyright: 2018-2020 Jerome G. M. Benoit <jgmbenoit@rezozer.net>
 
