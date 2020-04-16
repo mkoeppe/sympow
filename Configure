@@ -19,7 +19,7 @@ echo "**ERROR**: Could not find rm"; exit;
 fi
 $RM -f $FILE
 $RM -f $CONFIG
-VERSION=2.023.5
+VERSION=2.023.6
 echo "#define PREFIX \"$PREFIX\"" >> $CONFIG
 echo "#define VARPREFIX \"$VARPREFIX\"" >> $CONFIG
 echo "#define VERSION \"$VERSION\"" >> $CONFIG
@@ -61,18 +61,6 @@ fi
 SH=/bin/sh
 echo "#define SH \"$SH\"" >> $CONFIG
 echo "SH = $SH" >> $FILE
-
-AUTOHEADER=`which \autoheader`
-if [ -z "$AUTOHEADER" ];
-then
-echo "**ERROR**: Could not find autoheader"; exit;
-fi
-
-AUTOCONF=`which \autoconf`
-if [ -z "$AUTOCONF" ];
-then
-echo "**ERROR**: Could not find autoconf"; exit;
-fi
 
 CC=${CC:-gcc} && echo "CC = $CC" >> $FILE
 ##if [ -z "$CC" ];
@@ -181,7 +169,7 @@ done
 CC_ARGS="$ORIGINALCFLAGS -O3 $CFLAGS config/fpubits1.c config/fpubits2.c fpu.c -o config/fpubits"
 $CC $CC_ARGS
 if [ $? -ne 0 ]; then
-    echo >&2 "Error: the command below failed:"
+echo >&2 "Error: the command below failed:"
     echo >&2 "$CC $CC_ARGS"
     exit 1
 fi
@@ -215,25 +203,15 @@ EOF
 exit 1
 fi
 
-##
-
-## inspired from fontconfig material (configure.ac and fcarch.h)
+## non-sage material
 #######################################################################
 # Determine architecture endianess-tuple
 #######################################################################
-( \
-cd config && \
-$AUTOHEADER endiantuple.ac && $AUTOCONF -o endiantuple_ac.sh endiantuple.ac && \
-$SH endiantuple_ac.sh > endiantuple_ac.log )
-if [ $? -ne 0 -o ! -f config/endiantuple.c ]; then
-    echo >&2 "Error: failed to generate config/endiantuple.c"
-    exit 1
-fi
-
-$CC -o config/endiantuple config/endiantuple.c
+CC_ARGS="config/endiantuple.c -o config/endiantuple"
+$CC $CC_ARGS
 if [ $? -ne 0 ]; then
     echo >&2 "Error: the command below failed:"
-    echo >&2 "$CC -o config/endiantuple config/endiantuple.c"
+    echo >&2 "$CC $CC_ARGS"
     exit 1
 fi
 ENDIANTUPLE=$(config/endiantuple) && echo "#define ENDIANTUPLE \"$ENDIANTUPLE\"" >> $CONFIG
@@ -244,10 +222,7 @@ fi
 
 echo "ENDIANTUPLE for SYMPOW: $ENDIANTUPLE"
 
-echo "CONFETA = config/endiantuple_ac.sh config/endiantuple.c.in" >> $FILE
-echo "CONFETC = config/endiantuple.c" >> $FILE
 echo "CONFEXE = config/endiantuple config/fpubits" >> $FILE
-echo "CONFO = \$(CONFETA) \$(CONFETC) \$(CONFEXE)" >> $FILE
 
 ##
 
@@ -355,9 +330,7 @@ echo "clean:" >> $FILE
 echo "	\$(RM) -f \$(OBJS) sympow sympow.1 \$(TILDES)" >> $FILE
 echo "	\$(RM) -rf datafiles" >> $FILE
 echo "distclean: clean" >> $FILE
-echo "	\$(RM) -rf config/autom4te.cache" >> $FILE
-echo "	\$(RM) -f config/config.status config/*.log" >> $FILE
-echo "	\$(RM) -f \$(CONFO) config/*.log" >> $FILE
+echo "	\$(RM) -f \$(CONFEXE)" >> $FILE
 echo "	\$(RM) -f config.h Makefile" >> $FILE
 echo "install-arch: build-arch" >> $FILE
 echo "	install -d \$(DESTDIR)$PREFIX/bin" >> $FILE
